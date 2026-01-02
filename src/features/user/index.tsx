@@ -55,12 +55,13 @@ app.get("/keys", async (c) => {
              </div>
 
              <Card>
-                 <Table headers={["Name", "Prefix", "Created", "Status", "Actions"]}>
+                 <Table headers={["Name", "Prefix", "Created", "Hits", "Status", "Actions"]}>
                      {myKeys.map(k => (
                          <tr>
                              <td class="px-6 py-4 font-medium">{k.name}</td>
                              <td class="px-6 py-4 font-mono text-xs">{k.key_prefix}...</td>
                              <td class="px-6 py-4 text-sm text-gray-500">{k.created_at?.toLocaleDateString()}</td>
+                             <td class="px-6 py-4 text-sm text-gray-500">{k.total_hits}</td>
                              <td class="px-6 py-4">
                                  <Badge color={k.status === 'active' ? 'green' : 'gray'}>{k.status}</Badge>
                              </td>
@@ -210,6 +211,10 @@ app.get("/keys/:id", async (c) => {
                                  <label class="block text-sm font-medium text-gray-500">Last Used</label>
                                  <p>{key.last_used_at?.toLocaleString() || 'Never'}</p>
                              </div>
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-500">Total Hits</label>
+                                 <p class="font-bold">{key.total_hits}</p>
+                             </div>
                          </div>
                           <div class="bg-blue-50 p-4 rounded text-blue-800 text-sm">
                              <strong>Note:</strong> The full API key secret is not stored and cannot be retrieved. If you lost it, please generate a new key.
@@ -228,6 +233,37 @@ app.get("/keys/:id", async (c) => {
                            )}
                      </div>
                  </Card>
+            </div>
+        </Layout>
+    );
+});
+
+app.get("/profile", (c) => {
+    const user = c.get("jwtPayload");
+    return c.html(
+        <Layout title="My Profile" user={user}>
+            <div class="max-w-2xl mx-auto">
+                <Card title="Profile Details">
+                    <div class="flex items-center gap-6 mb-6">
+                        <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-3xl font-bold">
+                            {user.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold">{user.email}</h3>
+                            <Badge color={user.role === 'admin' ? 'blue' : 'gray'}>{user.role}</Badge>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
+                         <div>
+                             <label class="block text-sm font-medium text-gray-500">User ID</label>
+                             <p class="font-mono">{user.id}</p>
+                         </div>
+                         <div>
+                             <label class="block text-sm font-medium text-gray-500">Account Status</label>
+                             <Badge color={user.status === 'active' ? 'green' : 'red'}>{user.status}</Badge>
+                         </div>
+                    </div>
+                </Card>
             </div>
         </Layout>
     );

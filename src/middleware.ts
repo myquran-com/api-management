@@ -2,7 +2,7 @@ import { createMiddleware } from "hono/factory";
 import { verify } from "hono/jwt";
 import { db } from "./db";
 import { apiKeys, users, auditLogs } from "./db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { getCookie } from "hono/cookie";
 
 export const loggerMiddleware = createMiddleware(async (c, next) => {
@@ -84,8 +84,13 @@ export const apiKeyMiddleware = createMiddleware(async (c, next) => {
        return c.json({ error: "User Inactive - API Access Denied" }, 403);
   }
 
-  // Update last used
-  await db.update(apiKeys).set({ last_used_at: new Date() }).where(eq(apiKeys.id, keyRecord.id));
+  // Update last used and hit count
+  await db.update(apiKeys)
+    .set({ 
+        last_used_at: new Date(),
+        total_hits: sql`${apiKeys.total_hits} + 1`
+    })
+    .where(eq(apiKeys.id, keyRecord.id));
     
   // Log access (simple access log logic inline or via another middleware)
   // For 'audit log' requirement (admin actions), we handle that in mutation endpoints.

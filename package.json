@@ -7,6 +7,8 @@
     "dev": "concurrently \"bun run css\" \"bun --watch src/index.tsx\"",
     "start": "bun src/index.tsx",
     "db:push": "bunx drizzle-kit push",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "bunx drizzle-kit migrate",
     "seed": "bun seed.ts",
     "css": "bunx tailwindcss -i ./src/index.css -o ./src/static/index.css --watch"
   },

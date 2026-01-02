@@ -1,10 +1,5 @@
 import { PropsWithChildren } from "hono/jsx";
 
-// Simplified Icon wrapper or direct imports if using a library. 
-// Since we installed tabler icons via typical npm, usually they are svgs or separate react components.
-// For Hono JSX, we might need to use the SVG string or a specific library for preact/react if compatible.
-// To keep it simple and dependency-light, we'll use SVG strings for the requested icons.
-
 export const IconUsers = ({ class: className }: { class?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" class={className} width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -38,5 +33,14 @@ export const IconLogout = ({ class: className }: { class?: string }) => (
         <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path>
         <path d="M9 12h12l-3 -3"></path>
         <path d="M18 15l3 -3"></path>
+    </svg>
+);
+
+export const IconUserCircle = ({ class: className }: { class?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" class={className} width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+        <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+        <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855"></path>
     </svg>
 );

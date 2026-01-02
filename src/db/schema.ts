@@ -21,6 +21,7 @@ export const apiKeys = mysqlTable('api_keys', {
   key_prefix: varchar('key_prefix', { length: 10 }).notNull(), // To identify key type/owner without decrypting
   name: varchar('name', { length: 100 }).notNull(),
   status: mysqlEnum('status', ['active', 'revoked']).default('active').notNull(),
+  total_hits: int('total_hits').default(0).notNull(),
   created_at: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
   last_used_at: timestamp('last_used_at'),
   expires_at: timestamp('expires_at'),
