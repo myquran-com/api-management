@@ -10,6 +10,7 @@ import { db } from "../../db";
 import { apiKeys, auditLogs, users } from "../../db/schema";
 import { IconKey } from "../../lib/icons";
 import { createApiKeySchema } from "../../lib/zod-schema";
+import { redirectWithToast } from "../../lib/toast";
 import { authMiddleware, hashKey } from "../../middleware"; // We need hashKey helper
 
 const app = new Hono();
@@ -256,7 +257,7 @@ app.post("/keys/:id/revoke", async (c) => {
         .set({ status: "revoked" })
         .where(and(eq(apiKeys.id, id), eq(apiKeys.user_id, user.id)));
 
-    return c.redirect("/keys");
+    return redirectWithToast(c, "/dashboard", "success", "API key revoked successfully");
 });
 
 app.post("/keys/:id/delete", async (c) => {
@@ -276,7 +277,7 @@ app.post("/keys/:id/delete", async (c) => {
 
     await db.delete(apiKeys).where(and(eq(apiKeys.id, id), eq(apiKeys.user_id, user.id)));
 
-    return c.redirect("/keys");
+    return redirectWithToast(c, "/dashboard", "success", "API key deleted successfully");
 });
 
 app.get("/keys/:id", async (c) => {
@@ -480,7 +481,7 @@ app.post("/profile/edit", async (c) => {
 
     await db.update(users).set({ name, username }).where(eq(users.id, user.id));
 
-    // Update JWT (Ideally we should refresh the token, but for now we redirect to login or just profile but token data will be stale)
+    return redirectWithToast(c, "/profile", "success", "Profile updated successfully"); // JWT (Ideally we should refresh the token, but for now we redirect to login or just profile but token data will be stale)
     // To fix stale token data: The Middleware verifies the token. The 'user' object comes from the token payload.
     // If we update the DB, the token payload (which contains name/username if we put them there) is outdated.
     // BUT: Currently our JWT payload might only have id/email/role. Let's check auth.
@@ -565,18 +566,7 @@ app.post("/profile/password", async (c) => {
     const hashed = await hash(newPassword, 10);
     await db.update(users).set({ password: hashed }).where(eq(users.id, user.id));
 
-    return c.html(
-        <Layout title="Password Updated" user={user}>
-            <Card title="Success">
-                <div class="p-4 bg-green-50 text-green-700 rounded mb-4">
-                    Your password has been updated successfully.
-                </div>
-                <a href="/profile" class="text-blue-600 hover:underline">
-                    Back to Profile
-                </a>
-            </Card>
-        </Layout>,
-    );
+    return redirectWithToast(c, "/profile", "success", "Password updated successfully");
 });
 
 app.post("/profile/avatar/refresh", async (c) => {
@@ -631,7 +621,7 @@ app.post("/profile/avatar/refresh", async (c) => {
             maxAge: 60 * 60 * 24,
         });
 
-        return c.redirect("/profile");
+        return redirectWithToast(c, "/profile", "success", "Avatar refreshed from GitHub");
     } catch (error) {
         console.error("Avatar refresh error:", error);
         return c.text("Failed to update avatar", 500);

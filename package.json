@@ -4,8 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"bun run css\" \"bun --watch src/index.tsx\"",
+    "dev": "concurrently \"bun run css\" \"bun run build:toast\" \"bun --watch src/index.tsx\"",
     "start": "bun src/index.tsx",
+    "build:toast": "bun build-toast.ts",
     "db:push": "bunx drizzle-kit push",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate": "bunx drizzle-kit migrate",
@@ -21,9 +22,12 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.23",
     "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.8",
+    "esbuild": "^0.27.2",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18"
   },
@@ -38,6 +42,9 @@
     "hono-rate-limiter": "^0.5.3",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.16.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "sonner": "^2.0.7",
     "zod": "^4.3.4"
   }
 }

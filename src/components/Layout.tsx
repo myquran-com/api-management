@@ -24,8 +24,13 @@ export const Layout = ({
                         document.documentElement.classList.remove('dark')
                     }
                 `}} />
+                
+                {/* Toast notifications */}
+                <script src="/static/toast.js" defer></script>
             </head>
             <body class="h-full bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+                {/* Toast container */}
+                <div id="toast-root"></div>
                 <div x-data="{ sidebarOpen: false, darkMode: localStorage.theme === 'dark' }" class="flex h-screen overflow-hidden">
                     
                     {/* Mobile sidebar backdrop */}

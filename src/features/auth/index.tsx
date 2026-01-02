@@ -10,6 +10,7 @@ import { Button, Card, Input } from "../../components/UI";
 import { db } from "../../db";
 import { users } from "../../db/schema";
 import { loginSchema } from "../../lib/zod-schema";
+ import { redirectWithToast } from "../../lib/toast";
 import { githubAuth } from "./github";
 
 const app = new Hono();
@@ -93,7 +94,7 @@ app.post(
             });
 
             if (!user || !user.password || !(await compare(password, user.password))) {
-                return c.redirect("/login?error=Invalid credentials");
+                return redirectWithToast(c, "/login", "error", "Invalid credentials");
             }
 
             if (user.status !== "active") {
@@ -121,14 +122,14 @@ app.post(
             return c.redirect(user.role === "admin" ? "/admin" : "/dashboard");
         } catch (e) {
             console.error(e);
-            return c.text("Database Error", 500);
+            return redirectWithToast(c, "/login", "error", "Database Error");
         }
     },
 );
 
 app.post("/logout", (c) => {
     deleteCookie(c, "token");
-    return c.redirect("/login");
+    return redirectWithToast(c, "/login", "success", "Logged out successfully");
 });
 
 // GitHub OAuth Routes
