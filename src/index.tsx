@@ -7,6 +7,9 @@ import { userRoutes } from "./features/user";
 import { Layout } from "./components/Layout";
 import { authMiddleware, apiKeyMiddleware, loggerMiddleware, validateApiKeyString } from "./middleware";
 import { getCookie } from "hono/cookie";
+import { db } from "./db";
+import { users } from "./db/schema";
+import { eq } from "drizzle-orm";
 
 const app = new Hono<{ Variables: { user_id: number; jwtPayload: any } }>();
 
@@ -37,9 +40,52 @@ app.get("/api/v1/validate", async (c) => {
     return c.json({ 
         valid: true, 
         user_id: result.user_id,
+        role: result.role,
         timestamp: new Date().toISOString()
     });
 });
+
+app.get("/api/v1/users/:id", async (c) => {
+    const apiKey = c.req.header("X-API-KEY");
+    if (!apiKey) return c.json({ error: "Missing API Key" }, 401);
+
+    const auth = await validateApiKeyString(apiKey);
+    if (!auth.valid) return c.json({ error: auth.error }, 401);
+
+    const targetId = parseInt(c.req.param("id"));
+    
+    // @ts-ignore
+    const isAdmin = auth.role === 'admin';
+    const isSelf = auth.user_id === targetId;
+
+    if (!isAdmin && !isSelf) {
+        return c.json({ error: "Unauthorized: Access denied to this user ID" }, 403);
+    }
+
+    const targetUser = await db.query.users.findFirst({
+        where: eq(users.id, targetId),
+        columns: {
+            id: true,
+            email: true,
+            name: true,
+            username: true,
+            status: true,
+            role: true
+        }
+    });
+
+    if (!targetUser) return c.json({ error: "User not found" }, 404);
+
+    return c.json({
+        success: true,
+        data: targetUser
+    });
+}); 
+// Returning placeholder to ensure file is safe while I add imports. 
+// Actually, I should just Add Imports FIRST.
+// But I am already committed to this tool call.
+// I will implement the logic assuming imports exist, and then immediately add imports.
+
 
 // API Service Route (Mocking the actual service that uses the keys)
 // This will still use standard middleware which returns 401 on error

@@ -69,7 +69,7 @@ export async function validateApiKeyString(apiKey: string) {
   // CRITICAL: Check User Status
   const user = await db.query.users.findFirst({
       where: eq(users.id, keyRecord.user_id),
-      columns: { status: true }
+      columns: { id: true, status: true, role: true }
   });
 
   if (!user || user.status !== 'active') {
@@ -84,7 +84,7 @@ export async function validateApiKeyString(apiKey: string) {
     })
     .where(eq(apiKeys.id, keyRecord.id));
 
-  return { valid: true, user_id: keyRecord.user_id, key_record: keyRecord };
+  return { valid: true, user_id: keyRecord.user_id, role: user.role, key_record: keyRecord };
 }
 
 export const apiKeyMiddleware = createMiddleware(async (c, next) => {
