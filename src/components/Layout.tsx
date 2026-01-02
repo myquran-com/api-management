@@ -171,7 +171,7 @@ export const Layout = ({
                         
                          <footer class="bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 py-6 mt-auto">
                             <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                <p>&copy; {new Date().getFullYear()} API Manager. All rights reserved.</p>
+                                <p>&copy; {new Date().getFullYear()} <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">API Manager</a>. All rights reserved.</p>
                                 <div class="flex gap-6">
                                     <a href="/privacy-policy" class="hover:text-primary-600 dark:hover:text-primary-400">Privacy Policy</a>
                                     <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">Terms of Service</a>
