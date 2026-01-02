@@ -13,6 +13,7 @@ export const loggerMiddleware = createMiddleware(async (c, next) => {
     console.log(`[${c.req.method}] ${c.req.url} - ${c.res.status} (${time}ms)`);
 });
 
+// biome-ignore lint/custom/noExplicitAny: user type
 export const authMiddleware = createMiddleware(async (c, next) => {
     const token = c.req.header("Authorization")?.replace("Bearer ", "") || getCookie(c, "token"); // Support cookie for UI
 
@@ -28,6 +29,24 @@ export const authMiddleware = createMiddleware(async (c, next) => {
         // biome-ignore lint/style/noNonNullAssertion: Enforced by env check
         const payload = await verify(token, process.env.JWT_SECRET!);
         c.set("jwtPayload", payload);
+
+        // Fetch fresh user data
+        // biome-ignore lint/suspicious/noExplicitAny: payload is unknown
+        const userId = (payload as any).id;
+        const user = await db.query.users.findFirst({
+            where: eq(users.id, userId),
+        });
+
+        if (!user || user.status !== "active") {
+            // If user not found (deleted) or inactive, deny access
+            if (c.req.header("accept")?.includes("text/html")) {
+                return c.redirect("/logout"); // Redirect to logout to clear cookie
+            }
+            return c.json({ error: "User inactive or not found" }, 403);
+        }
+
+        c.set("user", user);
+
         await next();
     } catch (_e) {
         if (c.req.header("accept")?.includes("text/html")) {

@@ -13,7 +13,7 @@ import { privacyPolicy } from "./features/pages/privacy";
 import { userRoutes } from "./features/user";
 import { apiKeyMiddleware, authMiddleware, loggerMiddleware, validateApiKeyString } from "./middleware";
 
-const app = new Hono<{ Variables: { user_id: number; jwtPayload: unknown } }>();
+const app = new Hono<{ Variables: { user_id: number; jwtPayload: unknown; user: typeof users.$inferSelect } }>();
 
 app.use("*", loggerMiddleware);
 

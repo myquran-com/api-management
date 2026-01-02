@@ -8,10 +8,10 @@ import { apiKeys, auditLogs, users } from "../../db/schema";
 import { IconKey, IconShieldLock, IconUsers } from "../../lib/icons";
 import { auditLog } from "../../middleware";
 
-const app = new Hono();
+const app = new Hono<{ Variables: { user: typeof users.$inferSelect; jwtPayload: any } }>();
 
 app.get("/", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.redirect("/dashboard");
 
     const [userCount] = await db.select({ value: count() }).from(users);
@@ -67,7 +67,7 @@ app.get("/", async (c) => {
 });
 
 app.get("/users", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.redirect("/dashboard");
 
     const allUsers = await db.query.users.findMany({
@@ -134,7 +134,7 @@ app.get("/users", async (c) => {
 });
 
 app.get("/users/create", (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.redirect("/dashboard");
 
     return c.html(
@@ -180,7 +180,7 @@ app.get("/users/create", (c) => {
 });
 
 app.post("/users/create", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.text("Unauthorized", 403);
 
     const body = await c.req.parseBody();
@@ -225,7 +225,7 @@ app.post("/users/create", async (c) => {
 });
 
 app.post("/users/:id/toggle", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.text("Unauthorized", 403);
 
     const id = parseInt(c.req.param("id"), 10);
@@ -248,7 +248,7 @@ app.post("/users/:id/toggle", async (c) => {
 });
 
 app.post("/users/:id/reset", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.text("Unauthorized", 403);
 
     const id = parseInt(c.req.param("id"), 10);
@@ -283,7 +283,7 @@ app.post("/users/:id/reset", async (c) => {
 });
 
 app.get("/users/:id/edit", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.redirect("/dashboard");
     const id = parseInt(c.req.param("id"), 10);
     const targetUser = await db.query.users.findFirst({ where: eq(users.id, id) });
@@ -334,7 +334,7 @@ app.get("/users/:id/edit", async (c) => {
 });
 
 app.post("/users/:id/edit", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.text("Unauthorized", 403);
     const id = parseInt(c.req.param("id"), 10);
     const body = await c.req.parseBody();

@@ -13,11 +13,11 @@ import { createApiKeySchema } from "../../lib/zod-schema";
 import { redirectWithToast } from "../../lib/toast";
 import { authMiddleware, hashKey } from "../../middleware"; // We need hashKey helper
 
-const app = new Hono();
+const app = new Hono<{ Variables: { user: typeof users.$inferSelect; jwtPayload: any } }>();
 app.use("*", authMiddleware);
 
 app.get("/dashboard", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     const [keyCount] = await db.select({ value: count() }).from(apiKeys).where(eq(apiKeys.user_id, user.id));
 
     // If admin, fetch additional stats
@@ -114,7 +114,7 @@ app.get("/dashboard", async (c) => {
 });
 
 app.get("/keys", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     const myKeys = await db.query.apiKeys.findMany({
         where: eq(apiKeys.user_id, user.id),
         orderBy: [desc(apiKeys.created_at)],
@@ -190,7 +190,7 @@ app.get("/keys", async (c) => {
 });
 
 app.get("/keys/create", (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     return c.html(
         <Layout title="Generate API Key" user={user}>
             <Card title="New API Key" className="max-w-lg mx-auto">
@@ -212,7 +212,7 @@ app.get("/keys/create", (c) => {
 });
 
 app.post("/keys/create", zValidator("form", createApiKeySchema), async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     const { name, expires_in_days } = c.req.valid("form");
 
     // Generate secure key
@@ -249,7 +249,7 @@ app.post("/keys/create", zValidator("form", createApiKeySchema), async (c) => {
 });
 
 app.post("/keys/:id/revoke", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     const id = parseInt(c.req.param("id"), 10);
 
     await db
@@ -261,7 +261,7 @@ app.post("/keys/:id/revoke", async (c) => {
 });
 
 app.post("/keys/:id/delete", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     if (user.role !== "admin") return c.text("Unauthorized: Only Admins can delete keys", 403);
 
     const id = parseInt(c.req.param("id"), 10);
@@ -281,7 +281,7 @@ app.post("/keys/:id/delete", async (c) => {
 });
 
 app.get("/keys/:id", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     const id = parseInt(c.req.param("id"), 10);
 
     const key = await db.query.apiKeys.findFirst({
@@ -365,10 +365,7 @@ app.get("/keys/:id", async (c) => {
 
 app.get("/profile", async (c) => {
     try {
-        const payload = c.get("jwtPayload");
-        const user = await db.query.users.findFirst({
-            where: eq(users.id, payload.id),
-        });
+        const user = c.get("user");
 
         if (!user) return c.redirect("/logout");
 
@@ -438,10 +435,7 @@ app.get("/profile", async (c) => {
 });
 
 app.get("/profile/edit", async (c) => {
-    const payload = c.get("jwtPayload");
-    const user = await db.query.users.findFirst({
-        where: eq(users.id, payload.id),
-    });
+    const user = c.get("user");
 
     if (!user) return c.redirect("/logout");
 
@@ -469,7 +463,7 @@ app.get("/profile/edit", async (c) => {
 });
 
 app.post("/profile/edit", async (c) => {
-    const user = c.get("jwtPayload");
+    const user = c.get("user");
     const body = await c.req.parseBody();
     const name = body.name as string;
     const username = body.username as string;
@@ -492,10 +486,7 @@ app.post("/profile/edit", async (c) => {
 });
 
 app.get("/profile/password", async (c) => {
-    const payload = c.get("jwtPayload");
-    const user = await db.query.users.findFirst({
-        where: eq(users.id, payload.id),
-    });
+    const user = c.get("user");
 
     if (!user) return c.redirect("/logout");
 
@@ -533,10 +524,7 @@ app.get("/profile/password", async (c) => {
 });
 
 app.post("/profile/password", async (c) => {
-    const payload = c.get("jwtPayload");
-    const user = await db.query.users.findFirst({
-        where: eq(users.id, payload.id),
-    });
+    const user = c.get("user");
 
     if (!user) return c.redirect("/logout");
 
@@ -567,10 +555,7 @@ app.post("/profile/password", async (c) => {
 });
 
 app.post("/profile/avatar/refresh", async (c) => {
-    const payload = c.get("jwtPayload");
-    const user = await db.query.users.findFirst({
-        where: eq(users.id, payload.id),
-    });
+    const user = c.get("user");
 
     if (!user) return c.redirect("/logout");
     
