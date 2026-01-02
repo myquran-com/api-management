@@ -173,7 +173,7 @@ export const Layout = ({
                             <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                 <p>&copy; {new Date().getFullYear()} API Manager. All rights reserved.</p>
                                 <div class="flex gap-6">
-                                    <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">Privacy Policy</a>
+                                    <a href="/privacy-policy" class="hover:text-primary-600 dark:hover:text-primary-400">Privacy Policy</a>
                                     <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">Terms of Service</a>
                                     <a 
                                         href="https://myQuran.com" 

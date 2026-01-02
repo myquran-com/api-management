@@ -9,6 +9,7 @@ import { db } from "./db";
 import { users } from "./db/schema";
 import { adminRoutes } from "./features/admin";
 import { authRoutes } from "./features/auth";
+import { privacyPolicy } from "./features/pages/privacy";
 import { userRoutes } from "./features/user";
 import { apiKeyMiddleware, authMiddleware, loggerMiddleware, validateApiKeyString } from "./middleware";
 
@@ -103,6 +104,7 @@ app.get("/api/v1/resource", (c) => {
 });
 
 // Public Routes
+app.get("/privacy-policy", privacyPolicy);
 app.route("/", authRoutes);
 
 // Protected Routes
