@@ -39,7 +39,22 @@ A high-performance API Management Dashboard built with **Bun**, **Hono**,
    bun install
    ```
 
-2. **Database Setup** Ensure MariaDB is providing a database (e.g.,
+2. **Setup Environment Variables**
+
+Copy `.env.example` to `.env` and configure your credentials:
+
+```bash
+cp .env.example .env
+```
+
+**Konfigurasi GitHub OAuth (Opsional):**
+
+1. Buat OAuth App di GitHub Developer Settings.
+2. Set **Authorization callback URL** ke
+   `http://your-domain.com/auth/github/callback`.
+3. Isi `GITHUB_CLIENT_ID` dan `GITHUB_CLIENT_SECRET` di `.env`.
+
+4. **Database Setup** Ensure MariaDB is providing a database (e.g.,
    `api_management`). Update `.env` if necessary:
    ```env
    DB_HOST="localhost"
@@ -52,18 +67,18 @@ A high-performance API Management Dashboard built with **Bun**, **Hono**,
    PORT=8080
    ```
 
-3. **Migrations** Push the schema to the database:
+5. **Migrations** Push the schema to the database:
    ```bash
    bunx drizzle-kit push
    ```
 
-4. **Seed Admin User** Create the initial admin account (`banghasan@gmail.com` /
+6. **Seed Admin User** Create the initial admin account (`banghasan@gmail.com` /
    `admin123`):
    ```bash
    bun seed.ts
    ```
 
-5. **Run the App**
+7. **Run the App**
    ```bash
    bun --watch src/index.tsx
    ```

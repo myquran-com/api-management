@@ -6,13 +6,15 @@ export const users = mysqlTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   username: varchar('username', { length: 50 }),
   name: varchar('name', { length: 100 }),
-  password: varchar('password', { length: 255 }).notNull(),
+  password: varchar('password', { length: 255 }), // Nullable for OAuth users
+  github_id: varchar('github_id', { length: 255 }).unique(), // New field for GitHub OAuth
   role: mysqlEnum('role', ['admin', 'user']).default('user').notNull(),
   status: mysqlEnum('status', ['active', 'inactive']).default('active').notNull(),
   created_at: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
 }, (table) => {
   return {
     emailIdx: index('email_idx').on(table.email),
+    githubIdx: index('github_idx').on(table.github_id),
   }
 });
 
