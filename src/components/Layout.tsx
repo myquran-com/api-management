@@ -71,6 +71,10 @@ export const Layout = ({
                                 <IconDashboard class="w-5 h-5 text-primary-200" />
                                 Dashboard
                             </a>
+                            <a href="/keys" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                <IconKey class="w-5 h-5 text-primary-200" />
+                                API Keys
+                            </a>
                             {u?.role === "admin" && (
                                 <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
                                     <IconShieldLock class="w-5 h-5 text-primary-200" />
@@ -89,10 +93,6 @@ export const Layout = ({
                                         Users
                                     </a>
                                 )}
-                                <a href="/keys" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
-                                    <IconKey class="w-5 h-5 text-primary-200" />
-                                    API Keys
-                                </a>
                             </div>
                         </nav>
                         

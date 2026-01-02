@@ -2,7 +2,7 @@ import { hash } from "bcryptjs";
 import { count, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { Layout } from "../../components/Layout";
-import { Badge, Button, Card, Input, Table } from "../../components/UI";
+import { Badge, Button, Card, Input, Table, Pagination } from "../../components/UI";
 import { db } from "../../db";
 import { apiKeys, auditLogs, users } from "../../db/schema";
 import { IconKey, IconShieldLock, IconUsers } from "../../lib/icons";
@@ -71,8 +71,17 @@ app.get("/users", async (c) => {
     const user = c.get("user");
     if (user.role !== "admin") return c.redirect("/dashboard");
 
+    const page = Number(c.req.query("page") || 1);
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const [totalUsers] = await db.select({ value: count() }).from(users);
+    const totalPages = Math.ceil(totalUsers.value / limit);
+
     const allUsers = await db.query.users.findMany({
         orderBy: [desc(users.created_at)],
+        limit,
+        offset,
     });
 
     return c.html(
@@ -91,9 +100,9 @@ app.get("/users", async (c) => {
                 <Table headers={["Username", "Email", "Role", "Status", "Actions"]}>
                     {allUsers.map((u) => (
                         <tr key={u.id}>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.username}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.email}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">{u.role}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{u.username}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{u.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 uppercase">{u.role}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <Badge color={u.status === "active" ? "green" : "red"}>{u.status}</Badge>
                             </td>
@@ -129,6 +138,13 @@ app.get("/users", async (c) => {
                         </tr>
                     ))}
                 </Table>
+                {totalPages > 1 && (
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        baseUrl="/admin/users"
+                    />
+                )}
             </Card>
         </Layout>,
     );

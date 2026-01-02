@@ -5,7 +5,7 @@ import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { sign } from "hono/jwt";
 import { Layout } from "../../components/Layout";
-import { Badge, Button, Card, Input, Table } from "../../components/UI";
+import { Badge, Button, Card, Input, Table, Pagination } from "../../components/UI";
 import { db } from "../../db";
 import { apiKeys, auditLogs, users } from "../../db/schema";
 import { IconKey } from "../../lib/icons";
@@ -116,9 +116,22 @@ app.get("/dashboard", async (c) => {
 
 app.get("/keys", async (c) => {
     const user = c.get("user");
+    const page = Number(c.req.query("page") || 1);
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const [totalKeys] = await db
+        .select({ value: count() })
+        .from(apiKeys)
+        .where(eq(apiKeys.user_id, user.id));
+
+    const totalPages = Math.ceil(totalKeys.value / limit);
+
     const myKeys = await db.query.apiKeys.findMany({
         where: eq(apiKeys.user_id, user.id),
         orderBy: [desc(apiKeys.created_at)],
+        limit,
+        offset,
     });
 
     return c.html(
@@ -134,13 +147,13 @@ app.get("/keys", async (c) => {
                 <Table headers={["Name", "Prefix", "Created", "Expires", "Hits", "Status", "Actions"]}>
                     {myKeys.map((k) => (
                         <tr key={k.id}>
-                            <td class="px-6 py-4 font-medium">{k.name}</td>
-                            <td class="px-6 py-4 font-mono text-xs">{k.key_prefix}...</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{k.created_at?.toLocaleDateString()}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">
+                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{k.name}</td>
+                            <td class="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">{k.key_prefix}...</td>
+                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{k.created_at?.toLocaleDateString()}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                 {k.expires_at ? k.expires_at.toLocaleDateString() : "Never"}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{k.total_hits}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{k.total_hits}</td>
                             <td class="px-6 py-4">
                                 <Badge color={k.status === "active" ? "green" : "gray"}>{k.status}</Badge>
                             </td>
@@ -185,6 +198,13 @@ app.get("/keys", async (c) => {
                         </tr>
                     ))}
                 </Table>
+                {totalPages > 1 && (
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        baseUrl="/keys"
+                    />
+                )}
             </Card>
         </Layout>,
     );

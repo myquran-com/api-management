@@ -111,3 +111,122 @@ export const Table = ({ headers, children }: { headers: string[]; children: any 
         </table>
     </div>
 );
+
+export const Pagination = ({
+    currentPage,
+    totalPages,
+    baseUrl,
+    queryParams = {},
+}: {
+    currentPage: number;
+    totalPages: number;
+    baseUrl: string;
+    queryParams?: Record<string, string>;
+}) => {
+    // Generate URL for a page
+    const getPageUrl = (page: number) => {
+        const params = new URLSearchParams(queryParams);
+        params.set("page", page.toString());
+        return `${baseUrl}?${params.toString()}`;
+    };
+
+    // Calculate range of pages to show (e.g., 5 pages at a time)
+    const getPageRange = () => {
+        const delta = 2; // Number of pages to show on each side of current
+        const range = [];
+        for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+            range.push(i);
+        }
+
+        if (currentPage - delta > 2) {
+            range.unshift("...");
+        }
+        if (currentPage + delta < totalPages - 1) {
+            range.push("...");
+        }
+
+        range.unshift(1);
+        if (totalPages > 1) {
+            range.push(totalPages);
+        }
+
+        return range.map((page, index) => ({
+            key: typeof page === "number" ? page : `dots-${index}`,
+            value: page,
+        }));
+    };
+
+    const pages = getPageRange();
+
+    return (
+        <div class="flex items-center justify-between border-t border-gray-200 dark:border-slate-700 px-4 py-3 sm:px-6 mt-4">
+            <div class="flex flex-1 justify-between sm:hidden">
+                <a
+                    href={currentPage > 1 ? getPageUrl(currentPage - 1) : "#"}
+                    class={`relative inline-flex items-center rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 ${currentPage === 1 ? "pointer-events-none opacity-50" : ""}`}
+                >
+                    Previous
+                </a>
+                <a
+                    href={currentPage < totalPages ? getPageUrl(currentPage + 1) : "#"}
+                    class={`relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 ${currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}`}
+                >
+                    Next
+                </a>
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                        Showing page <span class="font-medium">{currentPage}</span> of{" "}
+                        <span class="font-medium">{totalPages}</span>
+                    </p>
+                </div>
+                <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md" aria-label="Pagination">
+                        <a
+                            href={currentPage > 1 ? getPageUrl(currentPage - 1) : "#"}
+                            class={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 dark:text-gray-500 ring-1 ring-inset ring-gray-300 dark:ring-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 focus:z-20 focus:outline-offset-0 ${currentPage === 1 ? "pointer-events-none opacity-50" : ""}`}
+                        >
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <title>Previous</title>
+                                <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+
+                        {pages.map((p) =>
+                            typeof p.value === "number" ? (
+                                <a
+                                    key={p.key}
+                                    href={getPageUrl(p.value as number)}
+                                    aria-current={p.value === currentPage ? "page" : undefined}
+                                    class={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${p.value === currentPage ? "z-10 bg-primary-600 text-white focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" : "text-gray-900 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 focus:z-20 focus:outline-offset-0"}`}
+                                >
+                                    {p.value}
+                                </a>
+                            ) : (
+                                <span
+                                    key={p.key}
+                                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 ring-1 ring-inset ring-gray-300 dark:ring-slate-600 focus:outline-offset-0"
+                                >
+                                    ...
+                                </span>
+                            ),
+                        )}
+
+                        <a
+                            href={currentPage < totalPages ? getPageUrl(currentPage + 1) : "#"}
+                            class={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 dark:text-gray-500 ring-1 ring-inset ring-gray-300 dark:ring-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 focus:z-20 focus:outline-offset-0 ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}`}
+                        >
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <title>Next</title>
+                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    );
+};
