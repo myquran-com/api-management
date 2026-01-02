@@ -10,6 +10,7 @@ export const users = mysqlTable(
         name: varchar("name", { length: 100 }),
         password: varchar("password", { length: 255 }), // Nullable for OAuth users
         github_id: varchar("github_id", { length: 255 }).unique(), // New field for GitHub OAuth
+        avatar: varchar("avatar", { length: 255 }), // User avatar URL
         role: mysqlEnum("role", ["admin", "user"]).default("user").notNull(),
         status: mysqlEnum("status", ["active", "inactive"]).default("active").notNull(),
         created_at: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),

@@ -81,10 +81,12 @@ export const Layout = ({
                         
                         <div class="absolute bottom-0 w-full p-4 border-t border-white/10 bg-black/20">
                              <div class="flex items-center gap-3 mb-4 px-2">
-                                <div class="w-8 h-8 rounded-full bg-primary-500/30 flex items-center justify-center text-sm font-bold border border-white/20">
-                                    {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
-                                    {(user as any)?.email?.[0].toUpperCase() || "U"}
-                                </div>
+                                {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
+                                <img 
+                                    src={(user as any)?.avatar || "/static/avatar.png"}
+                                    alt="User Avatar"
+                                    class="w-8 h-8 rounded-full border border-white/20"
+                                />
                                 <div class="overflow-hidden">
                                      {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
                                      <div class="text-sm font-medium truncate">{(user as any)?.name || "User"}</div>

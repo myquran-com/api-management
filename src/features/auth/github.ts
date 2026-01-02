@@ -78,6 +78,7 @@ export const githubAuth = {
             }
 
             const githubId = String(userData.id);
+            const avatarUrl = userData.avatar_url || null;
 
             // 4. Check DB for User
             // Try by github_id first
@@ -92,8 +93,8 @@ export const githubAuth = {
                 });
 
                 if (user) {
-                    // Update github_id for existing user
-                    await db.update(users).set({ github_id: githubId }).where(eq(users.id, user.id));
+                    // Update github_id and avatar for existing user
+                    await db.update(users).set({ github_id: githubId, avatar: avatarUrl }).where(eq(users.id, user.id));
                 } else {
                     // Create NEW User
                     const _insertResult = await db.insert(users).values({
@@ -101,6 +102,7 @@ export const githubAuth = {
                         name: userData.name || userData.login,
                         username: userData.login,
                         github_id: githubId,
+                        avatar: avatarUrl,
                         role: "user", // Default role
                         status: "active",
                         password: "", // No password
@@ -133,6 +135,7 @@ export const githubAuth = {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                avatar: user.avatar,
                 exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
             };
 
