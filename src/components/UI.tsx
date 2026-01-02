@@ -1,8 +1,13 @@
 import { PropsWithChildren } from "hono/jsx";
 
-export const Card = ({ children, title, className = "" }: PropsWithChildren<{ title?: string, className?: string }>) => (
+export const Card = ({ children, title, className = "", action }: PropsWithChildren<{ title?: string, className?: string, action?: any }>) => (
   <div class={`bg-white shadow rounded-lg p-6 ${className}`}>
-    {title && <h3 class="text-xl font-bold mb-4">{title}</h3>}
+    {(title || action) && (
+        <div class="flex justify-between items-center mb-4">
+            {title && <h3 class="text-xl font-bold">{title}</h3>}
+            {action && <div>{action}</div>}
+        </div>
+    )}
     {children}
   </div>
 );

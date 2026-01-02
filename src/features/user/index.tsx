@@ -8,6 +8,7 @@ import { IconKey } from "../../lib/icons";
 import { createApiKeySchema } from "../../lib/zod-schema";
 import { zValidator } from "@hono/zod-validator";
 import { hashKey, authMiddleware } from "../../middleware"; // We need hashKey helper
+import { hash, compare } from "bcryptjs";
 
 const app = new Hono();
 app.use("*", authMiddleware);
@@ -264,8 +265,9 @@ app.get("/profile", async (c) => {
                                  <p class="text-gray-500">{user.email}</p>
                                 <Badge color={user.role === 'admin' ? 'blue' : 'gray'}>{user.role}</Badge>
                             </div>
-                             <div class="ml-auto">
+                             <div class="ml-auto flex flex-col items-end gap-2">
                                 <a href="/profile/edit" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Edit Profile</a>
+                                <a href="/profile/password" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 text-sm">Change Password</a>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
@@ -347,6 +349,80 @@ app.post("/profile/edit", async (c) => {
     // EASIEST FIX: Fetch user from DB in /profile route instead of relying solely on JWT payload.
     
     return c.redirect("/profile");
+});
+
+app.get("/profile/password", async (c) => {
+    const payload = c.get("jwtPayload");
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, payload.id)
+    });
+
+    if (!user) return c.redirect('/logout');
+
+    return c.html(
+        <Layout title="Change Password" user={user}>
+            <div class="max-w-xl mx-auto">
+                <Card title="Change Password">
+                    <form action="/profile/password" method="post" class="space-y-4">
+                        {user.role !== 'admin' && (
+                             <Input type="password" name="old_password" label="Current Password" required />
+                        )}
+                        
+                        <Input type="password" name="new_password" label="New Password" required minLength={6} />
+                        <Input type="password" name="confirm_password" label="Confirm New Password" required minLength={6} />
+                        
+                        <div class="pt-4 flex justify-end gap-2">
+                            <a href="/profile" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Cancel</a>
+                            <Button type="submit" variant="primary">Update Password</Button>
+                        </div>
+                    </form>
+                </Card>
+            </div>
+        </Layout>
+    );
+});
+
+app.post("/profile/password", async (c) => {
+    const payload = c.get("jwtPayload");
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, payload.id)
+    });
+
+    if (!user) return c.redirect('/logout');
+
+    const body = await c.req.parseBody();
+    const oldPassword = body['old_password'] as string;
+    const newPassword = body['new_password'] as string;
+    const confirmPassword = body['confirm_password'] as string;
+
+    if (newPassword !== confirmPassword) {
+        return c.text("New passwords do not match", 400);
+    }
+
+    // Validation logic
+    if (user.role !== 'admin') {
+        if (!oldPassword) return c.text("Current password is required", 400);
+        
+        const valid = await compare(oldPassword, user.password);
+        if (!valid) {
+             return c.text("Incorrect current password", 401);
+             // In a real app, render the form again with error message
+        }
+    }
+
+    const hashed = await hash(newPassword, 10);
+    await db.update(users).set({ password: hashed }).where(eq(users.id, user.id));
+
+    return c.html(
+        <Layout title="Password Updated" user={user}>
+             <Card title="Success">
+                <div class="p-4 bg-green-50 text-green-700 rounded mb-4">
+                    Your password has been updated successfully.
+                </div>
+                <a href="/profile" class="text-blue-600 hover:underline">Back to Profile</a>
+             </Card>
+        </Layout>
+    );
 });
 
 export const userRoutes = app;

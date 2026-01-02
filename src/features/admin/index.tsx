@@ -72,7 +72,7 @@ app.get("/users", async (c) => {
 
     return c.html(
         <Layout title="User Management" user={user}>
-            <Card title="All Users">
+            <Card title="All Users" action={<a href="/admin/users/create" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">Create New User</a>}>
                 <Table headers={["ID", "Email", "Role", "Status", "Actions"]}>
                     {allUsers.map(u => (
                         <tr>
@@ -101,6 +101,80 @@ app.get("/users", async (c) => {
             </Card>
         </Layout>
     );
+});
+
+app.get("/users/create", (c) => {
+    const user = c.get("jwtPayload");
+    if (user.role !== 'admin') return c.redirect('/dashboard');
+
+    return c.html(
+        <Layout title="Create User" user={user}>
+            <div class="max-w-xl mx-auto">
+                 <div class="mb-4">
+                     <a href="/admin/users" class="text-blue-600 hover:underline">&larr; Back to Users</a>
+                 </div>
+                <Card title="Create New User">
+                    <form action="/admin/users/create" method="post" class="space-y-4">
+                        <Input name="email" label="Email" type="email" required placeholder="user@example.com" />
+                        <Input name="password" label="Password" type="password" required minLength={6} />
+                        <Input name="name" label="Full Name" placeholder="John Doe" />
+                        <Input name="username" label="Username" placeholder="johndoe" />
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                            <select name="role" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="user" selected>User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+
+                         <div class="pt-4 flex justify-end gap-2">
+                            <a href="/admin/users" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Cancel</a>
+                            <Button type="submit" variant="primary">Create User</Button>
+                        </div>
+                    </form>
+                </Card>
+            </div>
+        </Layout>
+    );
+});
+
+app.post("/users/create", async (c) => {
+    const user = c.get("jwtPayload");
+    if (user.role !== 'admin') return c.text("Unauthorized", 403);
+    
+    const body = await c.req.parseBody();
+    const email = body['email'] as string;
+    const password = body['password'] as string;
+    const name = body['name'] as string;
+    const username = body['username'] as string;
+    const role = body['role'] as 'admin'|'user';
+
+    // Basic Validation
+    if (!email || !password || password.length < 6) {
+        return c.text("Invalid input", 400); // Should ideally re-render form with error
+    }
+
+    // Check existing
+    const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
+    if (existing) {
+         return c.text("User with this email already exists", 400); 
+    }
+
+    const hashed = await hash(password, 10);
+
+    const result = await db.insert(users).values({
+        email,
+        password: hashed,
+        name,
+        username,
+        role,
+        status: 'active'
+    });
+
+    await auditLog("USER_CREATE_ADMIN", user.id, Number(result[0].insertId), `Admin created user ${email}`);
+
+    return c.redirect("/admin/users");
 });
 
 app.post("/users/:id/toggle", async (c) => {

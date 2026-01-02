@@ -67,7 +67,7 @@ A high-performance API Management Dashboard built with **Bun**, **Hono**,
    ```bash
    bun --watch src/index.tsx
    ```
-   Open [http://localhost:3000](http://localhost:3000)
+   Open [http://localhost:8080](http://localhost:8080)
 
 ## Run Scripts
 
@@ -81,5 +81,5 @@ A high-performance API Management Dashboard built with **Bun**, **Hono**,
 To use the API, include the `X-API-KEY` header:
 
 ```bash
-curl -H "X-API-KEY: sk_your_key_here" http://localhost:3000/api/v1/resource
+curl -H "X-API-KEY: sk_your_key_here" http://localhost:8080/api/v1/resource
 ```
