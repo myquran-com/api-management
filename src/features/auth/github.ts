@@ -1,9 +1,9 @@
-import { Context } from "hono";
-import { sign } from "hono/jwt";
-import { setCookie } from "hono/cookie";
-import { db } from "../../db";
-import { users, auditLogs } from "../../db/schema";
 import { eq } from "drizzle-orm";
+import type { Context } from "hono";
+import { setCookie } from "hono/cookie";
+import { sign } from "hono/jwt";
+import { db } from "../../db";
+import { auditLogs, users } from "../../db/schema";
 
 export const githubAuth = {
     loginWithGithub: (c: Context) => {
@@ -39,11 +39,13 @@ export const githubAuth = {
             });
 
             const tokenData = await tokenResponse.json();
-            if (tokenData.error || !tokenData.access_token) {
+            // biome-ignore lint/suspicious/noExplicitAny: External API response
+            if ((tokenData as any).error || !(tokenData as any).access_token) {
                 return c.text("Failed to get access token from GitHub", 400);
             }
 
-            const accessToken = tokenData.access_token;
+            // biome-ignore lint/suspicious/noExplicitAny: External API response
+            const accessToken = (tokenData as any).access_token;
 
             // 2. Fetch User Profile
             const userResponse = await fetch("https://api.github.com/user", {
@@ -52,7 +54,8 @@ export const githubAuth = {
                     "User-Agent": "Bun-API-Manager",
                 },
             });
-            const userData = await userResponse.json();
+            // biome-ignore lint/suspicious/noExplicitAny: External API response
+            const userData = await userResponse.json() as any;
 
             // 3. Fetch User Email (Primary if private)
             let email = userData.email;
@@ -63,7 +66,9 @@ export const githubAuth = {
                         "User-Agent": "Bun-API-Manager",
                     },
                 });
-                const emails = await emailsResponse.json();
+                // biome-ignore lint/suspicious/noExplicitAny: External API response
+                const emails = await emailsResponse.json() as any[];
+                // biome-ignore lint/suspicious/noExplicitAny: External API response
                 const primaryEmail = emails.find((e: any) => e.primary && e.verified);
                 if (primaryEmail) email = primaryEmail.email;
             }
@@ -91,7 +96,7 @@ export const githubAuth = {
                     await db.update(users).set({ github_id: githubId }).where(eq(users.id, user.id));
                 } else {
                     // Create NEW User
-                    const insertResult = await db.insert(users).values({
+                    const _insertResult = await db.insert(users).values({
                         email: email,
                         name: userData.name || userData.login,
                         username: userData.login,
@@ -131,6 +136,7 @@ export const githubAuth = {
                 exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
             };
 
+            // biome-ignore lint/style/noNonNullAssertion: Env var checked elsewhere or standard
             const jwt = await sign(payload, process.env.JWT_SECRET!);
             setCookie(c, "token", jwt, {
                 httpOnly: true,

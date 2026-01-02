@@ -7,7 +7,7 @@ const connection = await mysql.createConnection({
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "root",
     database: process.env.DB_NAME || "api_management",
-    port: parseInt(process.env.DB_PORT || "3306"),
+    port: parseInt(process.env.DB_PORT || "3306", 10),
 });
 
 export const db = drizzle(connection, { schema, mode: "default" });

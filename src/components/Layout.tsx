@@ -1,121 +1,110 @@
-import { PropsWithChildren } from "hono/jsx";
-import { IconLogout, IconUserCircle, IconMoon, IconSun, IconDashboard, IconKey, IconSettings } from "../lib/icons";
-
-const APP_NAME = process.env.APP_NAME || "ApiMgmt";
-
-const ThemeScript = () => (
-    <script
-        dangerouslySetInnerHTML={{
-            __html: `
-        (function() {
-            try {
-                const localTheme = localStorage.getItem('theme');
-                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (localTheme === 'dark' || (!localTheme && systemTheme)) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            } catch (e) {}
-        })();
-    `,
-        }}
-    />
-);
+import type { PropsWithChildren } from "hono/jsx";
+import { IconDashboard, IconKey, IconLogout, IconMoon, IconShieldLock, IconSun, IconUserCircle, IconUsers } from "../lib/icons";
 
 export const Layout = ({
-    children,
     title = "API Manager",
     user,
-}: PropsWithChildren<{ title?: string; user?: any }>) => {
+    children,
+}: PropsWithChildren<{ title?: string; user?: unknown }>) => {
     return (
         <html lang="en" class="h-full">
             <head>
                 <meta charset="UTF-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <title>
-                    {title} - {APP_NAME}
-                </title>
+                <title>{title}</title>
+                <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
                 <link href="/static/index.css" rel="stylesheet" />
-                <ThemeScript />
-                <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+                
+                {/* Theme Initialization Script to preventing FOUC */}
+                <script dangerouslySetInnerHTML={{ __html: `
+                    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        document.documentElement.classList.add('dark')
+                    } else {
+                        document.documentElement.classList.remove('dark')
+                    }
+                `}} />
             </head>
-            <body class="bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 font-sans antialiased h-full transition-colors duration-300">
-                <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }">
+            <body class="h-full bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+                <div x-data="{ sidebarOpen: false, darkMode: localStorage.theme === 'dark' }" class="flex h-screen overflow-hidden">
+                    
+                    {/* Mobile sidebar backdrop */}
+                    <div
+                        x-show="sidebarOpen"
+                        x-transition:enter="transition-opacity ease-linear duration-300"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition-opacity ease-linear duration-300"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        x-on:click="sidebarOpen = false"
+                        class="fixed inset-0 bg-gray-900/80 z-40 lg:hidden"
+                        style="display: none;"
+                    ></div>
+
                     {/* Sidebar */}
-                    {user && (
-                        <>
-                            {/* Mobile Sidebar Overlay */}
-                            <div
-                                x-show="sidebarOpen"
-                                x-on:click="sidebarOpen = false"
-                                class="fixed inset-0 z-20 transition-opacity bg-black opacity-50 lg:hidden"
-                            ></div>
+                    <div
+                        x-bind:class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+                        class="fixed inset-y-0 left-0 z-50 w-64 bg-linear-to-b from-primary-700 to-primary-900 dark:from-slate-800 dark:to-slate-900 text-white transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
+                    >
+                        <div class="flex items-center justify-center h-16 bg-primary-800/50 dark:bg-slate-900/50 shadow-sm">
+                            <h1 class="text-xl font-bold tracking-wider flex items-center gap-2">
+                                <IconShieldLock class="w-6 h-6 text-primary-200" />
+                                <span>API Manager</span>
+                            </h1>
+                        </div>
 
-                            <aside
-                                x-bind:class="sidebarOpen ? 'translate-x-0 ease-out' : '-translate-x-full ease-in'"
-                                class="fixed inset-y-0 left-0 z-30 w-64 overflow-y-auto transition duration-300 transform bg-white dark:bg-slate-800 border-r dark:border-slate-700 flex flex-col lg:translate-x-0 lg:static lg:inset-0 shadow-lg lg:shadow-none"
-                            >
-                                <div class="p-6 bg-linear-to-r from-primary-600 to-primary-700 dark:from-slate-800 dark:to-slate-900">
-                                    <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-                                        <IconDashboard class="w-8 h-8 text-primary-200" />
-                                        <span>{APP_NAME}</span>
-                                    </h1>
+                        <nav class="mt-6 px-4 space-y-2">
+                            <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                <IconDashboard class="w-5 h-5 text-primary-200" />
+                                Dashboard
+                            </a>
+                            <a href="/profile" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                <IconUserCircle class="w-5 h-5 text-primary-200" />
+                                Profile
+                            </a>
+                            <div class="pt-4 mt-4 border-t border-white/10">
+                                <div class="px-4 text-xs font-semibold text-primary-200/70 uppercase tracking-wider mb-2">Settings</div>
+                                <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                    <IconUsers class="w-5 h-5 text-primary-200" />
+                                    Users
+                                </a>
+                                <a href="/admin/keys" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                    <IconKey class="w-5 h-5 text-primary-200" />
+                                    API Keys
+                                </a>
+                            </div>
+                        </nav>
+                        
+                        <div class="absolute bottom-0 w-full p-4 border-t border-white/10 bg-black/20">
+                             <div class="flex items-center gap-3 mb-4 px-2">
+                                <div class="w-8 h-8 rounded-full bg-primary-500/30 flex items-center justify-center text-sm font-bold border border-white/20">
+                                    {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
+                                    {(user as any)?.email?.[0].toUpperCase() || "U"}
                                 </div>
-
-                                <nav class="mt-6 px-4 space-y-2 grow">
-                                    <a
-                                        href="/"
-                                        class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-slate-700 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors group"
-                                    >
-                                        <IconDashboard class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                                        Dashboard
-                                    </a>
-                                    {user.role === "admin" && (
-                                        <a
-                                            href="/admin/users"
-                                            class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-slate-700 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors group"
-                                        >
-                                            <IconUserCircle class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                                            Users
-                                        </a>
-                                    )}
-                                    <a
-                                        href="/keys"
-                                        class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-slate-700 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors group"
-                                    >
-                                        <IconKey class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                                        API Keys
-                                    </a>
-                                    <a
-                                        href="/profile"
-                                        class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-slate-700 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors group"
-                                    >
-                                        <IconSettings class="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                                        Profile
-                                    </a>
-                                </nav>
-
-                                <div class="p-4 border-t dark:border-slate-700">
-                                    <form action="/logout" method="post">
-                                        <button
-                                            type="submit"
-                                            class="w-full text-left flex items-center px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg gap-2 transition-colors"
-                                        >
-                                            <IconLogout class="w-5 h-5" /> Logout
-                                        </button>
-                                    </form>
+                                <div class="overflow-hidden">
+                                     {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
+                                     <div class="text-sm font-medium truncate">{(user as any)?.name || "User"}</div>
+                                     {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
+                                     <div class="text-xs text-primary-200/70 truncate">{(user as any)?.email}</div>
                                 </div>
-                            </aside>
-                        </>
-                    )}
+                             </div>
+                             <form action="/logout" method="post">
+                                <button type="submit" class="flex w-full items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-red-500/20 hover:bg-red-500/30 text-red-100 rounded-lg transition-colors border border-red-500/30">
+                                    <IconLogout class="w-4 h-4" />
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
 
-                    {/* Main Content */}
-                    <div class="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-slate-900">
-                        <header class="bg-white dark:bg-slate-800 shadow-sm px-6 py-4 flex justify-between items-center z-10 transition-colors duration-300">
+                    {/* Main content */}
+                    <div class="flex flex-col grow min-w-0 bg-gray-50 dark:bg-slate-900">
+                        {/* Header */}
+                        <header class="flex items-center justify-between h-16 px-6 bg-white dark:bg-slate-800 shadow-sm border-b border-gray-100 dark:border-slate-700 z-10">
                             <div class="flex items-center gap-4">
                                 {user && (
                                     <button
+                                        type="button"
                                         x-on:click="sidebarOpen = true"
                                         class="text-gray-500 focus:outline-none lg:hidden"
                                     >
@@ -125,6 +114,7 @@ export const Layout = ({
                                             fill="none"
                                             xmlns="http://www.w3.org/2000/svg"
                                         >
+                                            <title>Open sidebar</title>
                                             <path
                                                 d="M4 6H20M4 12H20M4 18H11"
                                                 stroke="currentColor"
@@ -135,73 +125,61 @@ export const Layout = ({
                                         </svg>
                                     </button>
                                 )}
-                                <h2 class="text-xl font-semibold text-gray-800 dark:text-white tracking-tight">
-                                    {title}
-                                </h2>
+                                <h2 class="text-xl font-semibold text-gray-800 dark:text-white">{title}</h2>
                             </div>
 
-                            <div class="flex items-center gap-4">
-                                {/* Dark/Light Toggle */}
-                                <div
-                                    x-data="{ 
-                            darkMode: localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
-                            toggle() {
-                                this.darkMode = !this.darkMode;
-                                if (this.darkMode) {
-                                    document.documentElement.classList.add('dark');
-                                    localStorage.setItem('theme', 'dark');
-                                } else {
-                                    document.documentElement.classList.remove('dark');
-                                    localStorage.setItem('theme', 'light');
-                                }
-                            }
-                        }"
+                             <div class="flex items-center gap-4"
+                                x-init="$watch('darkMode', val => {
+                                    localStorage.theme = val ? 'dark' : 'light';
+                                    if (val) document.documentElement.classList.add('dark');
+                                    else document.documentElement.classList.remove('dark');
+                                })"
+                             >
+                                {/* Dark Mode Toggle */}
+                                <button
+                                    type="button"
+                                    x-on:click="toggle()"
+                                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 focus:outline-none transition-colors"
+                                    x-data="{
+                                        toggle() {
+                                            this.darkMode = !this.darkMode;
+                                        }
+                                    }"
+                                    aria-label="Toggle Dark Mode"
                                 >
-                                    <button
-                                        x-on:click="toggle()"
-                                        class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 focus:outline-none transition-colors"
-                                    >
-                                        <span x-show="!darkMode">
-                                            <IconMoon class="w-6 h-6" />
-                                        </span>
-                                        <span x-show="darkMode" style="display: none;">
-                                            <IconSun class="w-6 h-6" />
-                                        </span>
-                                    </button>
-                                </div>
-
-                                {user && (
-                                    <div class="flex items-center gap-4 border-l pl-4 dark:border-slate-700">
-                                        <a
-                                            href="/profile"
-                                            class="flex items-center gap-2 text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 transition"
-                                            title="My Profile"
-                                        >
-                                            <span class="hidden md:inline text-sm font-medium">
-                                                {user.name || user.email}
-                                            </span>
-                                            <div class="bg-primary-100 dark:bg-primary-900/50 p-1 rounded-full text-primary-600 dark:text-primary-300">
-                                                <IconUserCircle class="w-7 h-7" />
-                                            </div>
-                                        </a>
-                                    </div>
-                                )}
+                                    <span x-show="!darkMode">
+                                        <IconMoon class="w-6 h-6" />
+                                    </span>
+                                    <span x-show="darkMode" style="display: none;">
+                                        <IconSun class="w-6 h-6" />
+                                    </span>
+                                </button>
                             </div>
                         </header>
 
-                        <main class="flex-1 overflow-y-auto p-6 transition-colors duration-300">
-                            <div class="w-full max-w-7xl mx-auto">{children}</div>
+                        {/* Content */}
+                        <main class="grow p-6 overflow-y-auto">
+                            <div class="max-w-7xl mx-auto">
+                                {children}
+                            </div>
                         </main>
-
-                        <footer class="bg-white dark:bg-slate-800 border-t dark:border-slate-700 px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                            © {new Date().getFullYear()} -{" "}
-                            <a
-                                href="https://myQuran.com"
-                                target="_blank"
-                                class="text-primary-600 dark:text-primary-400 hover:underline"
-                            >
-                                myQuran.com
-                            </a>
+                        
+                         <footer class="bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 py-6 mt-auto">
+                            <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                <p>&copy; {new Date().getFullYear()} API Manager. All rights reserved.</p>
+                                <div class="flex gap-6">
+                                    <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">Privacy Policy</a>
+                                    <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">Terms of Service</a>
+                                    <a 
+                                        href="https://myQuran.com" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        class="text-primary-600 dark:text-primary-400 hover:underline"
+                                    >
+                                        Powered by myQuran.com
+                                    </a>
+                                </div>
+                            </div>
                         </footer>
                     </div>
                 </div>

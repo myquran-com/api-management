@@ -1,15 +1,16 @@
+import { eq, sql } from "drizzle-orm";
+import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 import { verify } from "hono/jwt";
 import { db } from "./db";
-import { apiKeys, users, auditLogs } from "./db/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { getCookie } from "hono/cookie";
+import { apiKeys, auditLogs, users } from "./db/schema";
 
 export const loggerMiddleware = createMiddleware(async (c, next) => {
     const start = Date.now();
     await next();
-    const ms = Date.now() - start;
-    console.log(`${c.req.method} ${c.req.path} - ${c.res.status} - ${ms}ms`);
+    const end = Date.now();
+    const time = end - start;
+    console.log(`[${c.req.method}] ${c.req.url} - ${c.res.status} (${time}ms)`);
 });
 
 export const authMiddleware = createMiddleware(async (c, next) => {
@@ -24,14 +25,15 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     }
 
     try {
+        // biome-ignore lint/style/noNonNullAssertion: Enforced by env check
         const payload = await verify(token, process.env.JWT_SECRET!);
         c.set("jwtPayload", payload);
         await next();
-    } catch (e) {
+    } catch (_e) {
         if (c.req.header("accept")?.includes("text/html")) {
             return c.redirect("/login");
         }
-        return c.json({ error: "Invalid token" }, 401);
+        return c.json({ error: "Invalid Token" }, 401);
     }
 });
 

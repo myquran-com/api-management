@@ -1,11 +1,11 @@
-import { Hono } from "hono";
-import { db } from "../../db";
-import { users, apiKeys, auditLogs } from "../../db/schema";
-import { eq, desc, count } from "drizzle-orm";
-import { Layout } from "../../components/Layout";
-import { Card, Table, Badge, Button, Input } from "../../components/UI";
-import { IconUsers, IconKey, IconShieldLock } from "../../lib/icons";
 import { hash } from "bcryptjs";
+import { count, desc, eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { Layout } from "../../components/Layout";
+import { Badge, Button, Card, Input, Table } from "../../components/UI";
+import { db } from "../../db";
+import { apiKeys, auditLogs, users } from "../../db/schema";
+import { IconKey, IconShieldLock, IconUsers } from "../../lib/icons";
 import { auditLog } from "../../middleware";
 
 const app = new Hono();
@@ -152,15 +152,14 @@ app.get("/users/create", (c) => {
                         <Input name="name" label="Full Name" placeholder="John Doe" />
                         <Input name="username" label="Username" placeholder="johndoe" />
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <div class="mb-4">
+                            {/* biome-ignore lint/a11y/noLabelWithoutControl: select is next sibling */}
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                             <select
                                 name="role"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                class="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white"
                             >
-                                <option value="user" selected>
-                                    User
-                                </option>
+                                <option value="user">User</option>
                                 <option value="admin">Admin</option>
                             </select>
                         </div>
@@ -185,11 +184,11 @@ app.post("/users/create", async (c) => {
     if (user.role !== "admin") return c.text("Unauthorized", 403);
 
     const body = await c.req.parseBody();
-    const email = body["email"] as string;
-    const password = body["password"] as string;
-    const name = body["name"] as string;
-    const username = body["username"] as string;
-    const role = body["role"] as "admin" | "user";
+    const email = body.email as string;
+    const password = body.password as string;
+    const name = body.name as string;
+    const username = body.username as string;
+    const role = body.role as "admin" | "user";
 
     // Basic Validation
     if (!email || !password || password.length < 6) {
@@ -222,7 +221,7 @@ app.post("/users/:id/toggle", async (c) => {
     const user = c.get("jwtPayload");
     if (user.role !== "admin") return c.text("Unauthorized", 403);
 
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
     const targetUser = await db.query.users.findFirst({ where: eq(users.id, id) });
 
     if (!targetUser) return c.text("User not found", 404);
@@ -245,7 +244,7 @@ app.post("/users/:id/reset", async (c) => {
     const user = c.get("jwtPayload");
     if (user.role !== "admin") return c.text("Unauthorized", 403);
 
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
     // Generate temporary password (simplified to 'password123' for demo or random string)
     const tempPass = Math.random().toString(36).slice(-8);
     const hashed = await hash(tempPass, 10);
@@ -279,7 +278,7 @@ app.post("/users/:id/reset", async (c) => {
 app.get("/users/:id/edit", async (c) => {
     const user = c.get("jwtPayload");
     if (user.role !== "admin") return c.redirect("/dashboard");
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
     const targetUser = await db.query.users.findFirst({ where: eq(users.id, id) });
     if (!targetUser) return c.text("User not found", 404);
 
@@ -298,7 +297,7 @@ app.get("/users/:id/edit", async (c) => {
                         <Input name="username" label="Username" value={targetUser.username || ""} />
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                            <div class="block text-sm font-medium text-gray-700 mb-1">Role</div>
                             <select
                                 name="role"
                                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -330,17 +329,17 @@ app.get("/users/:id/edit", async (c) => {
 app.post("/users/:id/edit", async (c) => {
     const user = c.get("jwtPayload");
     if (user.role !== "admin") return c.text("Unauthorized", 403);
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
     const body = await c.req.parseBody();
 
     // Simple validation could be added
     await db
         .update(users)
         .set({
-            email: body["email"] as string,
-            name: body["name"] as string,
-            username: body["username"] as string,
-            role: body["role"] as "admin" | "user",
+            email: body.email as string,
+            name: body.name as string,
+            username: body.username as string,
+            role: body.role as "admin" | "user",
         })
         .where(eq(users.id, id));
 

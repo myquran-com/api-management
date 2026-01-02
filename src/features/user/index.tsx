@@ -1,14 +1,14 @@
+import { zValidator } from "@hono/zod-validator";
+import { compare, hash } from "bcryptjs";
+import { and, count, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { db } from "../../db";
-import { apiKeys, users, auditLogs } from "../../db/schema";
-import { eq, desc, and, count } from "drizzle-orm";
 import { Layout } from "../../components/Layout";
-import { Card, Table, Badge, Button, Input } from "../../components/UI";
+import { Badge, Button, Card, Input, Table } from "../../components/UI";
+import { db } from "../../db";
+import { apiKeys, auditLogs, users } from "../../db/schema";
 import { IconKey } from "../../lib/icons";
 import { createApiKeySchema } from "../../lib/zod-schema";
-import { zValidator } from "@hono/zod-validator";
-import { hashKey, authMiddleware } from "../../middleware"; // We need hashKey helper
-import { hash, compare } from "bcryptjs";
+import { authMiddleware, hashKey } from "../../middleware"; // We need hashKey helper
 
 const app = new Hono();
 app.use("*", authMiddleware);
@@ -67,6 +67,7 @@ app.get("/dashboard", async (c) => {
 
                         <Card title="Recent Activity">
                             <ul class="space-y-3">
+                                {/* biome-ignore lint/suspicious/noExplicitAny: loose type */}
                                 {adminStats.recentLogs.map((log: any) => (
                                     <li class="border-b last:border-0 border-gray-100 dark:border-slate-700 pb-3 mb-3 last:mb-0 last:pb-0">
                                         <span class="font-medium text-gray-800 dark:text-gray-200">{log.action}</span>
@@ -75,7 +76,7 @@ app.get("/dashboard", async (c) => {
                                             {log.created_at?.toLocaleString()}
                                         </span>
                                     </li>
-                                ))}
+                                )) }
                             </ul>
                         </Card>
                     </div>
@@ -246,7 +247,7 @@ app.post("/keys/create", zValidator("form", createApiKeySchema), async (c) => {
 
 app.post("/keys/:id/revoke", async (c) => {
     const user = c.get("jwtPayload");
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
 
     await db
         .update(apiKeys)
@@ -260,7 +261,7 @@ app.post("/keys/:id/delete", async (c) => {
     const user = c.get("jwtPayload");
     if (user.role !== "admin") return c.text("Unauthorized: Only Admins can delete keys", 403);
 
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
 
     // Allow admins to delete ANY key? Or just their own?
     // Usually "Admins can delete keys" implies power over others, but here we are in "User Features".
@@ -278,7 +279,7 @@ app.post("/keys/:id/delete", async (c) => {
 
 app.get("/keys/:id", async (c) => {
     const user = c.get("jwtPayload");
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
 
     const key = await db.query.apiKeys.findFirst({
         where: and(eq(apiKeys.id, id), eq(apiKeys.user_id, user.id)),
@@ -297,30 +298,30 @@ app.get("/keys/:id", async (c) => {
                 <Card title="API Key Details">
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-500">Name</label>
+                            <div class="block text-sm font-medium text-gray-500">Name</div>
                             <p class="text-lg font-medium">{key.name}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-500">Prefix</label>
+                            <div class="block text-sm font-medium text-gray-500">Prefix</div>
                             <p class="font-mono text-gray-800 bg-gray-100 inline-block px-2 rounded">
                                 {key.key_prefix}...
                             </p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-500">Status</label>
+                            <div class="block text-sm font-medium text-gray-500">Status</div>
                             <Badge color={key.status === "active" ? "green" : "gray"}>{key.status}</Badge>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-500">Created At</label>
+                                <div class="block text-sm font-medium text-gray-500">Created At</div>
                                 <p>{key.created_at?.toLocaleString()}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-500">Last Used</label>
+                                <div class="block text-sm font-medium text-gray-500">Last Used</div>
                                 <p>{key.last_used_at?.toLocaleString() || "Never"}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-500">Total Hits</label>
+                                <div class="block text-sm font-medium text-gray-500">Total Hits</div>
                                 <p class="font-bold">{key.total_hits}</p>
                             </div>
                         </div>
@@ -398,19 +399,19 @@ app.get("/profile", async (c) => {
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-500">Username</label>
+                                <div class="block text-sm font-medium text-gray-500">Username</div>
                                 <p class="font-mono">{user.username || "-"}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-500">Full Name</label>
+                                <div class="block text-sm font-medium text-gray-500">Full Name</div>
                                 <p>{user.name || "-"}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-500">User ID</label>
+                                <div class="block text-sm font-medium text-gray-500">User ID</div>
                                 <p class="font-mono">{user.id}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-500">Account Status</label>
+                                <div class="block text-sm font-medium text-gray-500">Account Status</div>
                                 <Badge color={user.status === "active" ? "green" : "red"}>{user.status}</Badge>
                             </div>
                         </div>
@@ -458,8 +459,8 @@ app.get("/profile/edit", async (c) => {
 app.post("/profile/edit", async (c) => {
     const user = c.get("jwtPayload");
     const body = await c.req.parseBody();
-    const name = body["name"] as string;
-    const username = body["username"] as string;
+    const name = body.name as string;
+    const username = body.username as string;
 
     // Optional: Username uniqueness check could be added here
 
@@ -469,7 +470,6 @@ app.post("/profile/edit", async (c) => {
     // To fix stale token data: The Middleware verifies the token. The 'user' object comes from the token payload.
     // If we update the DB, the token payload (which contains name/username if we put them there) is outdated.
     // BUT: Currently our JWT payload might only have id/email/role. Let's check auth.
-    // If we only store ID in JWT and fetch User from DB in middleware, we are good.
     // Checking middleware... "c.set('jwtPayload', payload);".
     // And in login: "sign({ id: user.id, email: user.email, role: user.role, ... }, secret)"
     // SO: The UI using `user.name` from `c.get("jwtPayload")` will be STALE until re-login.
@@ -529,9 +529,9 @@ app.post("/profile/password", async (c) => {
     if (!user) return c.redirect("/logout");
 
     const body = await c.req.parseBody();
-    const oldPassword = body["old_password"] as string;
-    const newPassword = body["new_password"] as string;
-    const confirmPassword = body["confirm_password"] as string;
+    const oldPassword = body.old_password as string;
+    const newPassword = body.new_password as string;
+    const confirmPassword = body.confirm_password as string;
 
     if (newPassword !== confirmPassword) {
         return c.text("New passwords do not match", 400);

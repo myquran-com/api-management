@@ -1,30 +1,30 @@
 console.log("Starting server...");
+
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
-import { createMiddleware } from "hono/factory";
-import { authRoutes } from "./features/auth";
-import { adminRoutes } from "./features/admin";
-import { userRoutes } from "./features/user";
-import { Layout } from "./components/Layout";
-import { authMiddleware, apiKeyMiddleware, loggerMiddleware, validateApiKeyString } from "./middleware";
 import { getCookie } from "hono/cookie";
+import { rateLimiter } from "hono-rate-limiter";
 import { db } from "./db";
 import { users } from "./db/schema";
-import { eq } from "drizzle-orm";
+import { adminRoutes } from "./features/admin";
+import { authRoutes } from "./features/auth";
+import { userRoutes } from "./features/user";
+import { apiKeyMiddleware, authMiddleware, loggerMiddleware, validateApiKeyString } from "./middleware";
 
-import { rateLimiter } from "hono-rate-limiter";
-
-const app = new Hono<{ Variables: { user_id: number; jwtPayload: any } }>();
+const app = new Hono<{ Variables: { user_id: number; jwtPayload: unknown } }>();
 
 app.use("*", loggerMiddleware);
+
+// Global Rate Limiter: 100 requests per minute
 app.use(
     "*",
     rateLimiter({
         windowMs: 60 * 1000, // 1 minute
-        limit: 100, // Limit each IP to 100 requests per `window` (here, per 1 minute).
+        limit: 100, // Limit each IP to 100 requests per windowMs
         standardHeaders: "draft-6", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-        keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "unknown", // Method to generate custom identifiers for clients.
-    }),
+        keyGenerator: (c) => c.req.header("x-forwarded-for") || "unknown", // Identify by IP
+    })
 );
 
 // Serve static files (Tailwind CSS)
@@ -32,8 +32,6 @@ app.use("/static/*", serveStatic({ root: "./src" }));
 
 // Health Check (For Docker/K8s)
 app.get("/health", (c) => c.json({ status: "ok", uptime: process.uptime() }));
-
-// Helper for special Validation Endpoint (Bypasses standard middleware to return always json)
 
 // Specific Route for Validation (Must BEFORE generic middleware)
 app.get("/api/v1/validate", async (c) => {
@@ -64,9 +62,8 @@ app.get("/api/v1/users/:id", async (c) => {
     const auth = await validateApiKeyString(apiKey);
     if (!auth.valid) return c.json({ error: auth.error }, 401);
 
-    const targetId = parseInt(c.req.param("id"));
+    const targetId = parseInt(c.req.param("id"), 10);
 
-    // @ts-ignore
     const isAdmin = auth.role === "admin";
     const isSelf = auth.user_id === targetId;
 
@@ -125,7 +122,7 @@ app.get("/", (c) => {
 });
 
 export default {
-    port: parseInt(process.env.PORT || "8080"),
+    port: parseInt(process.env.PORT || "8080", 10),
     hostname: process.env.HOST || "localhost",
     fetch: app.fetch,
 };
