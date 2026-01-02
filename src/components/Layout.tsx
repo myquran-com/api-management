@@ -4,8 +4,9 @@ import { IconDashboard, IconKey, IconLogout, IconMoon, IconShieldLock, IconSun, 
 export const Layout = ({
     title = "API Manager",
     user,
+    hideSidebar = false,
     children,
-}: PropsWithChildren<{ title?: string; user?: unknown }>) => {
+}: PropsWithChildren<{ title?: string; user?: unknown; hideSidebar?: boolean }>) => {
     return (
         <html lang="en" class="h-full">
             <head>
@@ -28,6 +29,7 @@ export const Layout = ({
                 <div x-data="{ sidebarOpen: false, darkMode: localStorage.theme === 'dark' }" class="flex h-screen overflow-hidden">
                     
                     {/* Mobile sidebar backdrop */}
+                    {!hideSidebar && (
                     <div
                         x-show="sidebarOpen"
                         x-transition:enter="transition-opacity ease-linear duration-300"
@@ -40,8 +42,10 @@ export const Layout = ({
                         class="fixed inset-0 bg-gray-900/80 z-40 lg:hidden"
                         style="display: none;"
                     ></div>
+                    )}
 
                     {/* Sidebar */}
+                    {!hideSidebar && (
                     <div
                         x-bind:class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
                         class="fixed inset-y-0 left-0 z-50 w-64 bg-linear-to-b from-primary-700 to-primary-900 dark:from-slate-800 dark:to-slate-900 text-white transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
@@ -96,6 +100,7 @@ export const Layout = ({
                             </form>
                         </div>
                     </div>
+                    )}
 
                     {/* Main content */}
                     <div class="flex flex-col grow min-w-0 bg-gray-50 dark:bg-slate-900">

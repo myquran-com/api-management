@@ -17,7 +17,7 @@ const app = new Hono();
 app.get("/login", (c) => {
     const error = c.req.query("error");
     return c.html(
-        <Layout title="Login">
+        <Layout title="Login" hideSidebar={true}>
             <div class="flex items-center justify-center min-h-[80vh]">
                 <Card title="Login to Dashboard" className="w-full max-w-md">
                     {error && (
