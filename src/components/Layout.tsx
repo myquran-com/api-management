@@ -35,7 +35,22 @@ export const Layout = ({
             <body class="h-full bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
                 {/* Toast container */}
                 <div id="toast-root"></div>
-                <div x-data="{ sidebarOpen: false, darkMode: localStorage.theme === 'dark' }" class="flex h-screen overflow-hidden">
+                <div 
+                    x-data="{ 
+                        sidebarOpen: false, 
+                        darkMode: localStorage.theme === 'dark',
+                        toggleTheme() {
+                            this.darkMode = !this.darkMode;
+                            localStorage.theme = this.darkMode ? 'dark' : 'light';
+                            if (this.darkMode) {
+                                document.documentElement.classList.add('dark');
+                            } else {
+                                document.documentElement.classList.remove('dark');
+                            }
+                        }
+                    }" 
+                    class="flex h-screen overflow-hidden"
+                >
                     
                     {/* Mobile sidebar backdrop */}
                     {!hideSidebar && (
@@ -75,12 +90,7 @@ export const Layout = ({
                                 <IconKey class="w-5 h-5 text-primary-200" />
                                 API Keys
                             </a>
-                            {u?.role === "admin" && (
-                                <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
-                                    <IconShieldLock class="w-5 h-5 text-primary-200" />
-                                    Admin Panel
-                                </a>
-                            )}
+
                             <a href="/profile" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
                                 <IconUserCircle class="w-5 h-5 text-primary-200" />
                                 Profile
@@ -97,6 +107,22 @@ export const Layout = ({
                         </nav>
                         
 
+                        <div class="absolute bottom-0 w-full p-4 border-t border-white/10 bg-black/20">
+                            <button
+                                type="button"
+                                x-on:click="toggleTheme()"
+                                class="flex w-full items-center justify-center gap-3 px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium"
+                            >
+                                <span x-show="!darkMode" class="flex items-center gap-2">
+                                    <IconMoon class="w-5 h-5" />
+                                    <span>Dark Mode</span>
+                                </span>
+                                <span x-show="darkMode" style="display: none;" class="flex items-center gap-2">
+                                    <IconSun class="w-5 h-5" />
+                                    <span>Light Mode</span>
+                                </span>
+                            </button>
+                        </div>
                     </div>
                     )}
 
@@ -131,33 +157,7 @@ export const Layout = ({
                                 <h2 class="text-xl font-semibold text-gray-800 dark:text-white">{title}</h2>
                             </div>
 
-                             <div class="flex items-center gap-4"
-                                x-init="$watch('darkMode', val => {
-                                    localStorage.theme = val ? 'dark' : 'light';
-                                    if (val) document.documentElement.classList.add('dark');
-                                    else document.documentElement.classList.remove('dark');
-                                })"
-                             >
-                                {/* Dark Mode Toggle */}
-                                <button
-                                    type="button"
-                                    x-on:click="toggle()"
-                                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 focus:outline-none transition-colors"
-                                    x-data="{
-                                        toggle() {
-                                            this.darkMode = !this.darkMode;
-                                        }
-                                    }"
-                                    aria-label="Toggle Dark Mode"
-                                >
-                                    <span x-show="!darkMode">
-                                        <IconMoon class="w-6 h-6" />
-                                    </span>
-                                    <span x-show="darkMode" style="display: none;">
-                                        <IconSun class="w-6 h-6" />
-                                    </span>
-                                </button>
-                            </div>
+
 
                              {/* User Dropdown */}
                              {user && (
