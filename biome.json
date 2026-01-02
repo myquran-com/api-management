@@ -38,6 +38,15 @@
       "linter": {
         "enabled": false
       }
+    },
+    {
+      "includes": ["src/static/toast.js"],
+      "linter": {
+        "enabled": false
+      },
+      "formatter": {
+        "enabled": false
+      }
     }
   ]
 }

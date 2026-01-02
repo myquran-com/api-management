@@ -8,6 +8,7 @@ import { apiKeys, auditLogs, users } from "../../db/schema";
 import { IconKey, IconShieldLock, IconUsers } from "../../lib/icons";
 import { auditLog } from "../../middleware";
 
+// biome-ignore lint/suspicious/noExplicitAny: loose jwt payload
 const app = new Hono<{ Variables: { user: typeof users.$inferSelect; jwtPayload: any } }>();
 
 app.get("/", async (c) => {
@@ -43,8 +44,8 @@ app.get("/", async (c) => {
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card title="Recent Activity">
                     <ul class="space-y-3">
-                        {recentLogs.map((log) => (
-                            <li class="border-b last:border-0 border-gray-100 dark:border-slate-700 pb-3 mb-3 last:mb-0 last:pb-0">
+                        {recentLogs.map((log, i) => (
+                            <li key={log.id || i} class="border-b last:border-0 border-gray-100 dark:border-slate-700 pb-3 mb-3 last:mb-0 last:pb-0">
                                 <span class="font-medium text-gray-800 dark:text-gray-200">{log.action}</span>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">{log.details}</p>
                                 <span class="text-xs text-gray-400 dark:text-gray-500">
@@ -89,7 +90,7 @@ app.get("/users", async (c) => {
             >
                 <Table headers={["Username", "Email", "Role", "Status", "Actions"]}>
                     {allUsers.map((u) => (
-                        <tr>
+                        <tr key={u.id}>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.username}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.email}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">{u.role}</td>

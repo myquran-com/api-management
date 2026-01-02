@@ -13,7 +13,7 @@ export const loggerMiddleware = createMiddleware(async (c, next) => {
     console.log(`[${c.req.method}] ${c.req.url} - ${c.res.status} (${time}ms)`);
 });
 
-// biome-ignore lint/custom/noExplicitAny: user type
+
 export const authMiddleware = createMiddleware(async (c, next) => {
     const token = c.req.header("Authorization")?.replace("Bearer ", "") || getCookie(c, "token"); // Support cookie for UI
 

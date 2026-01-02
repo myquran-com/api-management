@@ -13,6 +13,7 @@ import { createApiKeySchema } from "../../lib/zod-schema";
 import { redirectWithToast } from "../../lib/toast";
 import { authMiddleware, hashKey } from "../../middleware"; // We need hashKey helper
 
+// biome-ignore lint/suspicious/noExplicitAny: loose jwt payload
 const app = new Hono<{ Variables: { user: typeof users.$inferSelect; jwtPayload: any } }>();
 app.use("*", authMiddleware);
 
@@ -71,8 +72,8 @@ app.get("/dashboard", async (c) => {
                         <Card title="Recent Activity">
                             <ul class="space-y-3">
                                 {/* biome-ignore lint/suspicious/noExplicitAny: loose type */}
-                                {adminStats.recentLogs.map((log: any) => (
-                                    <li class="border-b last:border-0 border-gray-100 dark:border-slate-700 pb-3 mb-3 last:mb-0 last:pb-0">
+                                {adminStats.recentLogs.map((log: any, i: number) => (
+                                    <li key={log.id || i} class="border-b last:border-0 border-gray-100 dark:border-slate-700 pb-3 mb-3 last:mb-0 last:pb-0">
                                         <span class="font-medium text-gray-800 dark:text-gray-200">{log.action}</span>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">{log.details}</p>
                                         <span class="text-xs text-gray-400 dark:text-gray-500">
@@ -132,7 +133,7 @@ app.get("/keys", async (c) => {
             <Card>
                 <Table headers={["Name", "Prefix", "Created", "Expires", "Hits", "Status", "Actions"]}>
                     {myKeys.map((k) => (
-                        <tr>
+                        <tr key={k.id}>
                             <td class="px-6 py-4 font-medium">{k.name}</td>
                             <td class="px-6 py-4 font-mono text-xs">{k.key_prefix}...</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{k.created_at?.toLocaleDateString()}</td>
@@ -470,19 +471,13 @@ app.post("/profile/edit", async (c) => {
 
     // Optional: Username uniqueness check could be added here
 
-    await db.update(users).set({ name, username }).where(eq(users.id, user.id));
-
-    return redirectWithToast(c, "/profile", "success", "Profile updated successfully"); // JWT (Ideally we should refresh the token, but for now we redirect to login or just profile but token data will be stale)
-    // To fix stale token data: The Middleware verifies the token. The 'user' object comes from the token payload.
-    // If we update the DB, the token payload (which contains name/username if we put them there) is outdated.
-    // BUT: Currently our JWT payload might only have id/email/role. Let's check auth.
-    // Checking middleware... "c.set('jwtPayload', payload);".
-    // And in login: "sign({ id: user.id, email: user.email, role: user.role, ... }, secret)"
-    // SO: The UI using `user.name` from `c.get("jwtPayload")` will be STALE until re-login.
-    // FIX: We should fetch the FRESH user from DB for the /profile page, OR re-issue token.
-    // EASIEST FIX: Fetch user from DB in /profile route instead of relying solely on JWT payload.
-
-    return c.redirect("/profile");
+    try {
+        await db.update(users).set({ name, username }).where(eq(users.id, user.id));
+        return redirectWithToast(c, "/profile", "success", "Profile updated successfully");
+    } catch (error) {
+        console.error("Profile update error:", error);
+        return redirectWithToast(c, "/profile/edit", "error", "Failed to update profile");
+    }
 });
 
 app.get("/profile/password", async (c) => {
@@ -534,17 +529,16 @@ app.post("/profile/password", async (c) => {
     const confirmPassword = body.confirm_password as string;
 
     if (newPassword !== confirmPassword) {
-        return c.text("New passwords do not match", 400);
+        return redirectWithToast(c, "/profile/password", "error", "New passwords do not match");
     }
 
     // Validation logic
     if (user.role !== "admin") {
-        if (!oldPassword) return c.text("Current password is required", 400);
+        if (!oldPassword) return redirectWithToast(c, "/profile/password", "error", "Current password is required");
 
         const valid = user.password && (await compare(oldPassword, user.password));
         if (!valid) {
-            return c.text("Incorrect current password", 401);
-            // In a real app, render the form again with error message
+            return redirectWithToast(c, "/profile/password", "error", "Incorrect current password");
         }
     }
 
@@ -561,7 +555,7 @@ app.post("/profile/avatar/refresh", async (c) => {
     
     // Only GitHub users can refresh avatar
     if (!user.github_id) {
-        return c.text("This feature is only available for GitHub users", 403);
+        return redirectWithToast(c, "/profile", "error", "This feature is only available for GitHub users");
     }
 
     try {
@@ -574,7 +568,7 @@ app.post("/profile/avatar/refresh", async (c) => {
         });
 
         if (!response.ok) {
-            return c.text("Failed to fetch GitHub profile", 500);
+            return redirectWithToast(c, "/profile", "error", "Failed to fetch GitHub profile");
         }
 
         // biome-ignore lint/suspicious/noExplicitAny: External API response
@@ -606,7 +600,7 @@ app.post("/profile/avatar/refresh", async (c) => {
         return redirectWithToast(c, "/profile", "success", "Avatar refreshed from GitHub");
     } catch (error) {
         console.error("Avatar refresh error:", error);
-        return c.text("Failed to update avatar", 500);
+        return redirectWithToast(c, "/profile", "error", "Failed to update avatar");
     }
 });
 

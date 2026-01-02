@@ -76,7 +76,7 @@ export const privacyPolicy = (c: Context) => {
 
                         <div class="space-y-8">
                             {content.sections.map((section) => (
-                                <div>
+                                <div key={section.title}>
                                     <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3">{section.title}</h2>
                                     <p class="text-gray-600 dark:text-gray-300 leading-relaxed">{section.body}</p>
                                 </div>

@@ -9,6 +9,9 @@ await esbuild.build({
     target: ["es2020"],
     jsx: "automatic",
     jsxImportSource: "react",
+    define: {
+        "process.env.NODE_ENV": '"production"',
+    },
 });
 
 console.log("Toast client built successfully");

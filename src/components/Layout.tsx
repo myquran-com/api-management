@@ -7,6 +7,9 @@ export const Layout = ({
     hideSidebar = false,
     children,
 }: PropsWithChildren<{ title?: string; user?: unknown; hideSidebar?: boolean }>) => {
+    // biome-ignore lint/suspicious/noExplicitAny: user prop is loosely typed
+    const u = user as any;
+
     return (
         <html lang="en" class="h-full">
             <head>
@@ -17,6 +20,7 @@ export const Layout = ({
                 <link href="/static/index.css" rel="stylesheet" />
                 
                 {/* Theme Initialization Script to preventing FOUC */}
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: theme init script */}
                 <script dangerouslySetInnerHTML={{ __html: `
                     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                         document.documentElement.classList.add('dark')
@@ -67,8 +71,7 @@ export const Layout = ({
                                 <IconDashboard class="w-5 h-5 text-primary-200" />
                                 Dashboard
                             </a>
-                            {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
-                            {(user as any)?.role === "admin" && (
+                            {u?.role === "admin" && (
                                 <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
                                     <IconShieldLock class="w-5 h-5 text-primary-200" />
                                     Admin Panel
@@ -80,8 +83,7 @@ export const Layout = ({
                             </a>
                             <div class="pt-4 mt-4 border-t border-white/10">
                                 <div class="px-4 text-xs font-semibold text-primary-200/70 uppercase tracking-wider mb-2">Settings</div>
-                                {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
-                                {(user as any)?.role === "admin" && (
+                                {u?.role === "admin" && (
                                     <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
                                         <IconUsers class="w-5 h-5 text-primary-200" />
                                         Users
@@ -96,17 +98,14 @@ export const Layout = ({
                         
                         <div class="absolute bottom-0 w-full p-4 border-t border-white/10 bg-black/20">
                              <div class="flex items-center gap-3 mb-4 px-2">
-                                {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
                                 <img 
-                                    src={(user as any)?.avatar || "/static/avatar.png"}
+                                    src={u?.avatar || "/static/avatar.png"}
                                     alt="User Avatar"
                                     class="w-8 h-8 rounded-full border border-white/20"
                                 />
                                 <div class="overflow-hidden">
-                                     {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
-                                     <div class="text-sm font-medium truncate">{(user as any)?.name || (user as any)?.username || (user as any)?.email}</div>
-                                     {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
-                                     <div class="text-xs text-primary-200/70 truncate">{(user as any)?.email}</div>
+                                     <div class="text-sm font-medium truncate">{u?.name || u?.username || u?.email}</div>
+                                     <div class="text-xs text-primary-200/70 truncate">{u?.email}</div>
                                 </div>
                              </div>
                              <form action="/logout" method="post">
