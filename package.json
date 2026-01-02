@@ -1,0 +1,36 @@
+{
+  "name": "api-management",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"bun run css\" \"bun --watch src/index.tsx\"",
+    "start": "bun src/index.tsx",
+    "db:push": "bunx drizzle-kit push",
+    "seed": "bun seed.ts",
+    "css": "bunx tailwindcss -i ./src/index.css -o ./src/static/index.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.10",
+    "autoprefixer": "^10.4.23",
+    "concurrently": "^9.2.1",
+    "drizzle-kit": "^0.31.8",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.7.6",
+    "bcryptjs": "^3.0.3",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.3",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.16.0",
+    "zod": "^4.3.4"
+  }
+}
