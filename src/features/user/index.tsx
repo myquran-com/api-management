@@ -198,13 +198,11 @@ app.get("/keys", async (c) => {
                         </tr>
                     ))}
                 </Table>
-                {totalPages > 1 && (
-                    <Pagination
-                        currentPage={page}
-                        totalPages={totalPages}
-                        baseUrl="/keys"
-                    />
-                )}
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages > 0 ? totalPages : 1}
+                    baseUrl="/keys"
+                />
             </Card>
         </Layout>,
     );

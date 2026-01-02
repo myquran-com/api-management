@@ -138,13 +138,11 @@ app.get("/users", async (c) => {
                         </tr>
                     ))}
                 </Table>
-                {totalPages > 1 && (
-                    <Pagination
-                        currentPage={page}
-                        totalPages={totalPages}
-                        baseUrl="/admin/users"
-                    />
-                )}
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages > 0 ? totalPages : 1}
+                    baseUrl="/admin/users"
+                />
             </Card>
         </Layout>,
     );

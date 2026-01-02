@@ -130,27 +130,32 @@ export const Pagination = ({
         return `${baseUrl}?${params.toString()}`;
     };
 
-    // Calculate range of pages to show (e.g., 5 pages at a time)
+    // Calculate range of pages to show
     const getPageRange = () => {
-        const delta = 2; // Number of pages to show on each side of current
+        const delta = 2;
         const range = [];
-        for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
-            range.push(i);
+        const rangeWithDots = [];
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+                range.push(i);
+            }
         }
 
-        if (currentPage - delta > 2) {
-            range.unshift("...");
-        }
-        if (currentPage + delta < totalPages - 1) {
-            range.push("...");
+        let l: number | null = null;
+        for (const i of range) {
+            if (l) {
+                if (i - l === 2) {
+                    rangeWithDots.push(l + 1);
+                } else if (i - l !== 1) {
+                    rangeWithDots.push("...");
+                }
+            }
+            rangeWithDots.push(i);
+            l = i;
         }
 
-        range.unshift(1);
-        if (totalPages > 1) {
-            range.push(totalPages);
-        }
-
-        return range.map((page, index) => ({
+        return rangeWithDots.map((page, index) => ({
             key: typeof page === "number" ? page : `dots-${index}`,
             value: page,
         }));
