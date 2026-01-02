@@ -15,6 +15,12 @@ app.use("*", loggerMiddleware);
 // Serve static files (Tailwind CSS)
 app.use("/static/*", serveStatic({ root: "./src" }));
 
+// API Service Route (Mocking the actual service that uses the keys)
+app.use("/api/v1/*", apiKeyMiddleware);
+app.get("/api/v1/resource", (c) => {
+    return c.json({ message: "Access Granted", user_id: c.get("user_id") });
+});
+
 // Public Routes
 app.route("/", authRoutes);
 
@@ -26,12 +32,6 @@ app.use("/dashboard/*", authMiddleware); // User dashboard base
 app.use("/keys/*", authMiddleware); // API Key management
 app.use("/profile*", authMiddleware); // Profile management
 app.route("/", userRoutes); // User routes mounted at root for convenience or scoped
-
-// API Service Route (Mocking the actual service that uses the keys)
-app.use("/api/v1/*", apiKeyMiddleware);
-app.get("/api/v1/resource", (c) => {
-    return c.json({ message: "Access Granted", user_id: c.get("user_id") });
-});
 
 // Root Redirect
 app.get("/", (c) => {
