@@ -21,6 +21,15 @@ app.get("/api/v1/resource", (c) => {
     return c.json({ message: "Access Granted", user_id: c.get("user_id") });
 });
 
+app.get("/api/v1/validate", (c) => {
+    // If this handler is reached, it means apiKeyMiddleware has already successfully validated the key.
+    return c.json({ 
+        valid: true, 
+        user_id: c.get("user_id"),
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Public Routes
 app.route("/", authRoutes);
 
