@@ -96,25 +96,7 @@ export const Layout = ({
                             </div>
                         </nav>
                         
-                        <div class="absolute bottom-0 w-full p-4 border-t border-white/10 bg-black/20">
-                             <div class="flex items-center gap-3 mb-4 px-2">
-                                <img 
-                                    src={u?.avatar || "/static/avatar.png"}
-                                    alt="User Avatar"
-                                    class="w-8 h-8 rounded-full border border-white/20"
-                                />
-                                <div class="overflow-hidden">
-                                     <div class="text-sm font-medium truncate">{u?.name || u?.username || u?.email}</div>
-                                     <div class="text-xs text-primary-200/70 truncate">{u?.email}</div>
-                                </div>
-                             </div>
-                             <form action="/logout" method="post">
-                                <button type="submit" class="flex w-full items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-red-500/20 hover:bg-red-500/30 text-red-100 rounded-lg transition-colors border border-red-500/30">
-                                    <IconLogout class="w-4 h-4" />
-                                    Logout
-                                </button>
-                            </form>
-                        </div>
+
                     </div>
                     )}
 
@@ -176,6 +158,71 @@ export const Layout = ({
                                     </span>
                                 </button>
                             </div>
+
+                             {/* User Dropdown */}
+                             {user && (
+                                <div x-data="{ open: false }" class="relative">
+                                    <button
+                                        type="button"
+                                        x-on:click="open = !open"
+                                        {...{ "x-on:click.outside": "open = false" }}
+                                        class="flex items-center gap-3 focus:outline-none"
+                                    >
+                                        <div class="hidden md:flex flex-col items-end text-right">
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[150px] truncate">
+                                                {u?.name || u?.username || u?.email}
+                                            </span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 max-w-[150px] truncate">
+                                                {u?.email}
+                                            </span>
+                                        </div>
+                                        <img
+                                            src={u?.avatar || "/static/avatar.png"}
+                                            alt="User Avatar"
+                                            class="w-9 h-9 rounded-full border-2 border-gray-200 dark:border-slate-600"
+                                        />
+                                    </button>
+
+                                    <div
+                                        x-show="open"
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="transform opacity-0 scale-95"
+                                        x-transition:enter-end="transform opacity-100 scale-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="transform opacity-100 scale-100"
+                                        x-transition:leave-end="transform opacity-0 scale-95"
+                                        class="absolute right-0 mt-2 w-56 origin-top-right rounded-lg bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-100 dark:border-slate-700 z-50"
+                                        style="display: none;"
+                                    >
+                                        <div class="px-4 py-3 border-b border-gray-100 dark:border-slate-700 md:hidden">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{u?.name || u?.username}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{u?.email}</p>
+                                        </div>
+
+                                        <div class="py-1">
+                                            <a href="/profile" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                                                <IconUserCircle class="w-4 h-4" />
+                                                Profile
+                                            </a>
+                                            {u?.role === "admin" && (
+                                                <a href="/admin" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
+                                                    <IconShieldLock class="w-4 h-4" />
+                                                    Admin Panel
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        <div class="py-1 border-t border-gray-100 dark:border-slate-700">
+                                            <form action="/logout" method="post">
+                                                <button type="submit" class="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                    <IconLogout class="w-4 h-4" />
+                                                    Logout
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                             )}
                         </header>
 
                         {/* Content */}
