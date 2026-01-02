@@ -61,6 +61,9 @@ export const Layout = ({ children, title = "API Manager", user }: PropsWithChild
                 <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
                     {children}
                 </main>
+                <footer class="bg-white border-t px-6 py-4 text-center text-sm text-gray-600">
+                    © 2026 - <a href="https://myQuran.com" target="_blank" class="text-blue-600 hover:underline">myQuran.com</a>
+                </footer>
             </div>
         </div>
       </body>

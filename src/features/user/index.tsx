@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db } from "../../db";
-import { apiKeys, users } from "../../db/schema";
+import { apiKeys, users, auditLogs } from "../../db/schema";
 import { eq, desc, and, count } from "drizzle-orm";
 import { Layout } from "../../components/Layout";
 import { Card, Table, Badge, Button, Input } from "../../components/UI";
@@ -17,26 +17,84 @@ app.get("/dashboard", async (c) => {
     const user = c.get("jwtPayload");
     const [keyCount] = await db.select({ value: count() }).from(apiKeys).where(eq(apiKeys.user_id, user.id));
 
+    // If admin, fetch additional stats
+    let adminStats = null;
+    if (user.role === 'admin') {
+        const [totalUsers] = await db.select({ value: count() }).from(users);
+        const [totalKeys] = await db.select({ value: count() }).from(apiKeys);
+        const recentLogs = await db.query.auditLogs.findMany({
+            orderBy: [desc(auditLogs.created_at)],
+            limit: 5
+        });
+        adminStats = { totalUsers: totalUsers.value, totalKeys: totalKeys.value, recentLogs };
+    }
+
     return c.html(
-        <Layout title="User Dashboard" user={user}>
-            <div class="max-w-4xl mx-auto">
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <Card title="My API Keys">
-                        <div class="flex items-center justify-between">
-                            <span class="text-3xl font-bold">{keyCount.value}</span>
-                            <IconKey class="text-blue-500 w-8 h-8" />
+        <Layout title={user.role === 'admin' ? "Admin Dashboard" : "User Dashboard"} user={user}>
+            <div class="max-w-7xl mx-auto">
+                {/* Admin Section */}
+                {adminStats && (
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Admin Overview</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <Card title="Total Users" className="border-l-4 border-blue-500">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-3xl font-bold">{adminStats.totalUsers}</span>
+                                    <IconKey class="text-blue-500 w-8 h-8" />
+                                </div>
+                                <div class="mt-4">
+                                    <a href="/admin/users" class="text-blue-600 hover:underline text-sm">Manage Users &rarr;</a>
+                                </div>
+                            </Card>
+                            <Card title="Total API Keys" className="border-l-4 border-green-500">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-3xl font-bold">{adminStats.totalKeys}</span>
+                                    <IconKey class="text-green-500 w-8 h-8" />
+                                </div>
+                            </Card>
+                            <Card title="System Status" className="border-l-4 border-purple-500">
+                                <div class="flex items-center gap-2">
+                                    <Badge color="green">Operational</Badge>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-2">All systems running normally</p>
+                            </Card>
                         </div>
-                        <div class="mt-4">
-                            <a href="/keys" class="text-blue-600 hover:underline">Manage Keys &rarr;</a>
-                        </div>
-                    </Card>
-                    <Card title="Account Status">
-                         <div class="flex items-center gap-2">
-                             Status: <Badge color="green">Active</Badge>
-                         </div>
-                         <p class="text-sm text-gray-500 mt-2">Your account is fully operational.</p>
-                    </Card>
-                 </div>
+                        
+                        <Card title="Recent Activity">
+                            <ul class="space-y-3">
+                                {adminStats.recentLogs.map((log: any) => (
+                                    <li class="border-b pb-2 last:border-0">
+                                        <span class="font-medium text-gray-800">{log.action}</span>
+                                        <p class="text-sm text-gray-500">{log.details}</p>
+                                        <span class="text-xs text-gray-400">{log.created_at?.toLocaleString()}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Card>
+                    </div>
+                )}
+
+                {/* User Section */}
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">My Account</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card title="My API Keys">
+                            <div class="flex items-center justify-between">
+                                <span class="text-3xl font-bold">{keyCount.value}</span>
+                                <IconKey class="text-blue-500 w-8 h-8" />
+                            </div>
+                            <div class="mt-4">
+                                <a href="/keys" class="text-blue-600 hover:underline">Manage Keys &rarr;</a>
+                            </div>
+                        </Card>
+                        <Card title="Account Status">
+                             <div class="flex items-center gap-2">
+                                 Status: <Badge color="green">Active</Badge>
+                             </div>
+                             <p class="text-sm text-gray-500 mt-2">Your account is fully operational.</p>
+                        </Card>
+                    </div>
+                </div>
             </div>
         </Layout>
     );
