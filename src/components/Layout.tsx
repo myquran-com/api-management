@@ -91,10 +91,7 @@ export const Layout = ({
                                 API Keys
                             </a>
 
-                            <a href="/profile" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
-                                <IconUserCircle class="w-5 h-5 text-primary-200" />
-                                Profile
-                            </a>
+
                             <div class="pt-4 mt-4 border-t border-white/10">
                                 <div class="px-4 text-xs font-semibold text-primary-200/70 uppercase tracking-wider mb-2">Settings</div>
                                 {u?.role === "admin" && (
@@ -237,7 +234,7 @@ export const Layout = ({
                                 <p>&copy; {new Date().getFullYear()} <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">API Manager</a>. All rights reserved.</p>
                                 <div class="flex gap-6">
                                     <a href="/privacy-policy" class="hover:text-primary-600 dark:hover:text-primary-400">Privacy Policy</a>
-                                    <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400">Terms of Service</a>
+                                    <a href="/terms" class="hover:text-primary-600 dark:hover:text-primary-400">Terms of Service</a>
                                     <a 
                                         href="https://myQuran.com" 
                                         target="_blank" 
