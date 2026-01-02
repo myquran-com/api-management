@@ -1,15 +1,16 @@
 import { Hono } from "hono";
 import { db } from "../../db";
-import { apiKeys } from "../../db/schema";
+import { apiKeys, users } from "../../db/schema";
 import { eq, desc, and, count } from "drizzle-orm";
 import { Layout } from "../../components/Layout";
 import { Card, Table, Badge, Button, Input } from "../../components/UI";
 import { IconKey } from "../../lib/icons";
 import { createApiKeySchema } from "../../lib/zod-schema";
 import { zValidator } from "@hono/zod-validator";
-import { hashKey } from "../../middleware"; // We need hashKey helper
+import { hashKey, authMiddleware } from "../../middleware"; // We need hashKey helper
 
 const app = new Hono();
+app.use("*", authMiddleware);
 
 app.get("/dashboard", async (c) => {
     const user = c.get("jwtPayload");
@@ -55,12 +56,15 @@ app.get("/keys", async (c) => {
              </div>
 
              <Card>
-                 <Table headers={["Name", "Prefix", "Created", "Hits", "Status", "Actions"]}>
+                 <Table headers={["Name", "Prefix", "Created", "Expires", "Hits", "Status", "Actions"]}>
                      {myKeys.map(k => (
                          <tr>
                              <td class="px-6 py-4 font-medium">{k.name}</td>
                              <td class="px-6 py-4 font-mono text-xs">{k.key_prefix}...</td>
                              <td class="px-6 py-4 text-sm text-gray-500">{k.created_at?.toLocaleDateString()}</td>
+                             <td class="px-6 py-4 text-sm text-gray-500">
+                                {k.expires_at ? k.expires_at.toLocaleDateString() : 'Never'}
+                             </td>
                              <td class="px-6 py-4 text-sm text-gray-500">{k.total_hits}</td>
                              <td class="px-6 py-4">
                                  <Badge color={k.status === 'active' ? 'green' : 'gray'}>{k.status}</Badge>
@@ -120,7 +124,7 @@ app.post("/keys/create", zValidator("form", createApiKeySchema), async (c) => {
         key_hash: hashed,
         key_prefix: rawKey.substring(0, 10),
         status: 'active',
-        // expires_at: new Date(Date.now() + expires_in_days * 86400000)
+        expires_at: new Date(Date.now() + expires_in_days * 86400000)
     });
 
     return c.html(
@@ -238,35 +242,111 @@ app.get("/keys/:id", async (c) => {
     );
 });
 
-app.get("/profile", (c) => {
-    const user = c.get("jwtPayload");
+app.get("/profile", async (c) => {
+    try {
+        const payload = c.get("jwtPayload");
+        const user = await db.query.users.findFirst({
+            where: eq(users.id, payload.id)
+        });
+        
+        if (!user) return c.redirect('/logout');
+        
+        return c.html(
+            <Layout title="My Profile" user={user}>
+                <div class="max-w-2xl mx-auto">
+                    <Card title="Profile Details">
+                        <div class="flex items-center gap-6 mb-6">
+                            <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-3xl font-bold">
+                                {(user.email || user.username || "?").charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold">{user.name || user.email}</h3>
+                                 <p class="text-gray-500">{user.email}</p>
+                                <Badge color={user.role === 'admin' ? 'blue' : 'gray'}>{user.role}</Badge>
+                            </div>
+                             <div class="ml-auto">
+                                <a href="/profile/edit" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Edit Profile</a>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-500">Username</label>
+                                 <p class="font-mono">{user.username || '-'}</p>
+                             </div>
+                              <div>
+                                 <label class="block text-sm font-medium text-gray-500">Full Name</label>
+                                 <p>{user.name || '-'}</p>
+                             </div>
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-500">User ID</label>
+                                 <p class="font-mono">{user.id}</p>
+                             </div>
+                             <div>
+                                 <label class="block text-sm font-medium text-gray-500">Account Status</label>
+                                 <Badge color={user.status === 'active' ? 'green' : 'red'}>{user.status}</Badge>
+                             </div>
+                        </div>
+                    </Card>
+                </div>
+            </Layout>
+        );
+    } catch (e) {
+        console.error("Profile Error:", e);
+        return c.text("Error loading profile", 500);
+    }
+});
+
+app.get("/profile/edit", async (c) => {
+    const payload = c.get("jwtPayload");
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, payload.id)
+    });
+
+    if (!user) return c.redirect('/logout');
+
     return c.html(
-        <Layout title="My Profile" user={user}>
-            <div class="max-w-2xl mx-auto">
-                <Card title="Profile Details">
-                    <div class="flex items-center gap-6 mb-6">
-                        <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-3xl font-bold">
-                            {user.email.charAt(0).toUpperCase()}
+        <Layout title="Edit Profile" user={user}>
+            <div class="max-w-xl mx-auto">
+                <Card title="Edit Your Profile">
+                    <form action="/profile/edit" method="post" class="space-y-4">
+                        <Input name="name" label="Full Name" value={user.name || ""} placeholder="John Doe" />
+                        <Input name="username" label="Username" value={user.username || ""} placeholder="johndoe" />
+                        
+                         <div class="pt-4 flex justify-end gap-2">
+                            <a href="/profile" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Cancel</a>
+                            <Button type="submit" variant="primary">Save Changes</Button>
                         </div>
-                        <div>
-                            <h3 class="text-2xl font-bold">{user.email}</h3>
-                            <Badge color={user.role === 'admin' ? 'blue' : 'gray'}>{user.role}</Badge>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
-                         <div>
-                             <label class="block text-sm font-medium text-gray-500">User ID</label>
-                             <p class="font-mono">{user.id}</p>
-                         </div>
-                         <div>
-                             <label class="block text-sm font-medium text-gray-500">Account Status</label>
-                             <Badge color={user.status === 'active' ? 'green' : 'red'}>{user.status}</Badge>
-                         </div>
-                    </div>
+                    </form>
                 </Card>
             </div>
         </Layout>
     );
+});
+
+app.post("/profile/edit", async (c) => {
+    const user = c.get("jwtPayload");
+    const body = await c.req.parseBody();
+    const name = body['name'] as string;
+    const username = body['username'] as string;
+
+    // Optional: Username uniqueness check could be added here
+
+    await db.update(users)
+        .set({ name, username })
+        .where(eq(users.id, user.id));
+
+    // Update JWT (Ideally we should refresh the token, but for now we redirect to login or just profile but token data will be stale)
+    // To fix stale token data: The Middleware verifies the token. The 'user' object comes from the token payload.
+    // If we update the DB, the token payload (which contains name/username if we put them there) is outdated.
+    // BUT: Currently our JWT payload might only have id/email/role. Let's check auth.
+    // If we only store ID in JWT and fetch User from DB in middleware, we are good.
+    // Checking middleware... "c.set('jwtPayload', payload);". 
+    // And in login: "sign({ id: user.id, email: user.email, role: user.role, ... }, secret)"
+    // SO: The UI using `user.name` from `c.get("jwtPayload")` will be STALE until re-login.
+    // FIX: We should fetch the FRESH user from DB for the /profile page, OR re-issue token.
+    // EASIEST FIX: Fetch user from DB in /profile route instead of relying solely on JWT payload.
+    
+    return c.redirect("/profile");
 });
 
 export const userRoutes = app;

@@ -8,6 +8,13 @@
       "when": 1767329966190,
       "tag": "0000_add_total_hits",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1767330879339,
+      "tag": "0001_brainy_guardian",
+      "breakpoints": true
     }
   ]
 }

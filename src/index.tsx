@@ -24,6 +24,7 @@ app.route("/admin", adminRoutes);
 
 app.use("/dashboard/*", authMiddleware); // User dashboard base
 app.use("/keys/*", authMiddleware); // API Key management
+app.use("/profile*", authMiddleware); // Profile management
 app.route("/", userRoutes); // User routes mounted at root for convenience or scoped
 
 // API Service Route (Mocking the actual service that uses the keys)

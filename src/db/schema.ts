@@ -4,6 +4,8 @@ import { sql } from "drizzle-orm";
 export const users = mysqlTable('users', {
   id: int('id').primaryKey().autoincrement(),
   email: varchar('email', { length: 255 }).notNull().unique(),
+  username: varchar('username', { length: 50 }),
+  name: varchar('name', { length: 100 }),
   password: varchar('password', { length: 255 }).notNull(),
   role: mysqlEnum('role', ['admin', 'user']).default('user').notNull(),
   status: mysqlEnum('status', ['active', 'inactive']).default('active').notNull(),

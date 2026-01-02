@@ -93,6 +93,7 @@ app.get("/users", async (c) => {
                                         <IconShieldLock class="w-5 h-5" />
                                      </button>
                                 </form>
+                                <a href={`/admin/users/${u.id}/edit`} class="text-blue-600 hover:text-blue-800 text-sm flex items-center">Edit</a>
                             </td>
                         </tr>
                     ))}
@@ -159,6 +160,63 @@ app.post("/users/:id/reset", async (c) => {
              </Card>
          </Layout>
      );
+});
+
+app.get("/users/:id/edit", async (c) => {
+    const user = c.get("jwtPayload");
+    if (user.role !== 'admin') return c.redirect('/dashboard');
+    const id = parseInt(c.req.param("id"));
+    const targetUser = await db.query.users.findFirst({ where: eq(users.id, id)});
+    if (!targetUser) return c.text("User not found", 404);
+
+    return c.html(
+        <Layout title={`Edit User: ${targetUser.email}`} user={user}>
+            <div class="max-w-xl mx-auto">
+                 <div class="mb-4">
+                     <a href="/admin/users" class="text-blue-600 hover:underline">&larr; Back to Users</a>
+                 </div>
+                <Card title="Edit User Details">
+                    <form action={`/admin/users/${id}/edit`} method="post" class="space-y-4">
+                        <Input name="email" label="Email" value={targetUser.email} type="email" required />
+                        <Input name="name" label="Full Name" value={targetUser.name || ""} />
+                        <Input name="username" label="Username" value={targetUser.username || ""} />
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                            <select name="role" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="user" selected={targetUser.role === 'user'}>User</option>
+                                <option value="admin" selected={targetUser.role === 'admin'}>Admin</option>
+                            </select>
+                        </div>
+
+                         <div class="pt-4 flex justify-end gap-2">
+                            <a href="/admin/users" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Cancel</a>
+                            <Button type="submit" variant="primary">Save Admin Changes</Button>
+                        </div>
+                    </form>
+                </Card>
+            </div>
+        </Layout>
+    );
+});
+
+app.post("/users/:id/edit", async (c) => {
+    const user = c.get("jwtPayload");
+    if (user.role !== 'admin') return c.text("Unauthorized", 403);
+    const id = parseInt(c.req.param("id"));
+    const body = await c.req.parseBody();
+    
+    // Simple validation could be added
+    await db.update(users).set({
+        email: body['email'] as string,
+        name: body['name'] as string,
+        username: body['username'] as string,
+        role: body['role'] as 'admin'|'user'
+    }).where(eq(users.id, id));
+
+     await auditLog("USER_EDIT_ADMIN", user.id, id, `Admin edited user ${id}`);
+
+    return c.redirect("/admin/users");
 });
 
 export const adminRoutes = app;
