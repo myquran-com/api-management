@@ -26,13 +26,13 @@ app.get("/", async (c) => {
     return c.html(
         <Layout title="Admin Dashboard" user={user}>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <Card title="Total Users" className="border-l-4 border-blue-500">
+                <Card title="Total Users" className="border-l-4 border-blue-500 dark:border-blue-400">
                     <div class="flex items-center justify-between">
                         <span class="text-3xl font-bold">{userCount.value}</span>
                         <IconUsers class="text-blue-500 w-8 h-8" />
                     </div>
                 </Card>
-                <Card title="Total API Keys" className="border-l-4 border-green-500">
+                <Card title="Total API Keys" className="border-l-4 border-green-500 dark:border-green-400">
                     <div class="flex items-center justify-between">
                         <span class="text-3xl font-bold">{keyCount.value}</span>
                         <IconKey class="text-green-500 w-8 h-8" />
@@ -44,17 +44,17 @@ app.get("/", async (c) => {
                  <Card title="Recent Activity">
                     <ul class="space-y-3">
                         {recentLogs.map(log => (
-                            <li class="border-b pb-2 last:border-0">
-                                <span class="font-medium text-gray-800">{log.action}</span>
-                                <p class="text-sm text-gray-500">{log.details}</p>
-                                <span class="text-xs text-gray-400">{log.created_at?.toLocaleString()}</span>
+                            <li class="border-b last:border-0 border-gray-100 dark:border-slate-700 pb-3 mb-3 last:mb-0 last:pb-0">
+                                <span class="font-medium text-gray-800 dark:text-gray-200">{log.action}</span>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{log.details}</p>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">{log.created_at?.toLocaleString()}</span>
                             </li>
                         ))}
                     </ul>
                  </Card>
                  <Card title="Quick Actions">
                     <div class="flex flex-col gap-2">
-                         <a href="/admin/users" class="text-blue-600 hover:underline">Manage Users &rarr;</a>
+                         <a href="/admin/users" class="text-blue-600 dark:text-blue-400 hover:underline">Manage Users &rarr;</a>
                     </div>
                  </Card>
             </div>

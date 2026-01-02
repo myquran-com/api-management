@@ -35,24 +35,24 @@ app.get("/dashboard", async (c) => {
                 {/* Admin Section */}
                 {adminStats && (
                     <div class="mb-8">
-                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Admin Overview</h3>
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Admin Overview</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <Card title="Total Users" className="border-l-4 border-blue-500">
+                            <Card title="Total Users" className="border-l-4 border-blue-500 dark:border-blue-400">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl font-bold">{adminStats.totalUsers}</span>
-                                    <IconKey class="text-blue-500 w-8 h-8" />
+                                    <IconKey class="text-blue-500 dark:text-blue-400 w-8 h-8" />
                                 </div>
                                 <div class="mt-4">
-                                    <a href="/admin/users" class="text-blue-600 hover:underline text-sm">Manage Users &rarr;</a>
+                                    <a href="/admin/users" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">Manage Users &rarr;</a>
                                 </div>
                             </Card>
-                            <Card title="Total API Keys" className="border-l-4 border-green-500">
+                            <Card title="Total API Keys" className="border-l-4 border-green-500 dark:border-green-400">
                                 <div class="flex items-center justify-between">
                                     <span class="text-3xl font-bold">{adminStats.totalKeys}</span>
-                                    <IconKey class="text-green-500 w-8 h-8" />
+                                    <IconKey class="text-green-500 dark:text-green-400 w-8 h-8" />
                                 </div>
                             </Card>
-                            <Card title="System Status" className="border-l-4 border-purple-500">
+                            <Card title="System Status" className="border-l-4 border-purple-500 dark:border-purple-400">
                                 <div class="flex items-center gap-2">
                                     <Badge color="green">Operational</Badge>
                                 </div>
@@ -63,10 +63,10 @@ app.get("/dashboard", async (c) => {
                         <Card title="Recent Activity">
                             <ul class="space-y-3">
                                 {adminStats.recentLogs.map((log: any) => (
-                                    <li class="border-b pb-2 last:border-0">
-                                        <span class="font-medium text-gray-800">{log.action}</span>
-                                        <p class="text-sm text-gray-500">{log.details}</p>
-                                        <span class="text-xs text-gray-400">{log.created_at?.toLocaleString()}</span>
+                                    <li class="border-b last:border-0 border-gray-100 dark:border-slate-700 pb-3 mb-3 last:mb-0 last:pb-0">
+                                        <span class="font-medium text-gray-800 dark:text-gray-200">{log.action}</span>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{log.details}</p>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">{log.created_at?.toLocaleString()}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -76,15 +76,15 @@ app.get("/dashboard", async (c) => {
 
                 {/* User Section */}
                 <div>
-                    <h3 class="text-lg font-semibold mb-4 text-gray-700">My Account</h3>
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">My Account</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card title="My API Keys">
                             <div class="flex items-center justify-between">
                                 <span class="text-3xl font-bold">{keyCount.value}</span>
-                                <IconKey class="text-blue-500 w-8 h-8" />
+                                <IconKey class="text-blue-500 dark:text-blue-400 w-8 h-8" />
                             </div>
                             <div class="mt-4">
-                                <a href="/keys" class="text-blue-600 hover:underline">Manage Keys &rarr;</a>
+                                <a href="/keys" class="text-blue-600 dark:text-blue-400 hover:underline">Manage Keys &rarr;</a>
                             </div>
                         </Card>
                         <Card title="Account Status">
@@ -323,9 +323,9 @@ app.get("/profile", async (c) => {
                                  <p class="text-gray-500">{user.email}</p>
                                 <Badge color={user.role === 'admin' ? 'blue' : 'gray'}>{user.role}</Badge>
                             </div>
-                             <div class="ml-auto flex flex-col items-end gap-2">
-                                <a href="/profile/edit" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Edit Profile</a>
-                                <a href="/profile/password" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 text-sm">Change Password</a>
+                            <div class="ml-auto flex flex-col items-end gap-2">
+                                <a href="/profile/edit" class="px-4 py-2 rounded-lg font-medium transition duration-200 shadow-sm transform active:scale-95 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 shadow-primary-500/30">Edit Profile</a>
+                                <a href="/profile/password" class="px-4 py-2 rounded-lg font-medium transition duration-200 shadow-sm transform active:scale-95 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">Change Password</a>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
@@ -461,7 +461,7 @@ app.post("/profile/password", async (c) => {
     if (user.role !== 'admin') {
         if (!oldPassword) return c.text("Current password is required", 400);
         
-        const valid = await compare(oldPassword, user.password);
+        const valid = user.password && await compare(oldPassword, user.password);
         if (!valid) {
              return c.text("Incorrect current password", 401);
              // In a real app, render the form again with error message
