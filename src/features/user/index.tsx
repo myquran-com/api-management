@@ -2,6 +2,8 @@ import { zValidator } from "@hono/zod-validator";
 import { compare, hash } from "bcryptjs";
 import { and, count, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { setCookie } from "hono/cookie";
+import { sign } from "hono/jwt";
 import { Layout } from "../../components/Layout";
 import { Badge, Button, Card, Input, Table } from "../../components/UI";
 import { db } from "../../db";
@@ -374,9 +376,11 @@ app.get("/profile", async (c) => {
                 <div class="max-w-2xl mx-auto">
                     <Card title="Profile Details">
                         <div class="flex items-center gap-6 mb-6">
-                            <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-3xl font-bold">
-                                {(user.email || user.username || "?").charAt(0).toUpperCase()}
-                            </div>
+                            <img 
+                                src={user.avatar || "/static/avatar.png"}
+                                alt="User Avatar"
+                                class="w-20 h-20 rounded-full border-2 border-gray-200 dark:border-slate-700"
+                            />
                             <div>
                                 <h3 class="text-2xl font-bold">{user.name || user.email}</h3>
                                 <p class="text-gray-500">{user.email}</p>
@@ -395,6 +399,16 @@ app.get("/profile", async (c) => {
                                 >
                                     Change Password
                                 </a>
+                                {user.github_id && (
+                                    <form action="/profile/avatar/refresh" method="post">
+                                        <button
+                                            type="submit"
+                                            class="px-4 py-2 rounded-lg font-medium transition duration-200 shadow-sm transform active:scale-95 border border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                        >
+                                            Update Avatar from GitHub
+                                        </button>
+                                    </form>
+                                )}
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
@@ -563,6 +577,65 @@ app.post("/profile/password", async (c) => {
             </Card>
         </Layout>,
     );
+});
+
+app.post("/profile/avatar/refresh", async (c) => {
+    const payload = c.get("jwtPayload");
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, payload.id),
+    });
+
+    if (!user) return c.redirect("/logout");
+    
+    // Only GitHub users can refresh avatar
+    if (!user.github_id) {
+        return c.text("This feature is only available for GitHub users", 403);
+    }
+
+    try {
+        // Fetch latest GitHub user data
+        // We need to use the GitHub ID to get public profile (no auth token needed for public data)
+        const response = await fetch(`https://api.github.com/user/${user.github_id}`, {
+            headers: {
+                "User-Agent": "Bun-API-Manager",
+            },
+        });
+
+        if (!response.ok) {
+            return c.text("Failed to fetch GitHub profile", 500);
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: External API response
+        const githubData = await response.json() as any;
+        const newAvatarUrl = githubData.avatar_url || null;
+
+        // Update avatar in database
+        await db.update(users).set({ avatar: newAvatarUrl }).where(eq(users.id, user.id));
+
+        // Update JWT with new avatar
+        const newPayload = {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            avatar: newAvatarUrl,
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
+        };
+
+        // biome-ignore lint/style/noNonNullAssertion: Enforced by env check
+        const token = await sign(newPayload, process.env.JWT_SECRET!);
+
+        setCookie(c, "token", token, {
+            path: "/",
+            secure: false, // Dev mode
+            httpOnly: true,
+            maxAge: 60 * 60 * 24,
+        });
+
+        return c.redirect("/profile");
+    } catch (error) {
+        console.error("Avatar refresh error:", error);
+        return c.text("Failed to update avatar", 500);
+    }
 });
 
 export const userRoutes = app;
