@@ -97,10 +97,20 @@ export const githubAuth = {
                     await db.update(users).set({ github_id: githubId, avatar: avatarUrl }).where(eq(users.id, user.id));
                 } else {
                     // Create NEW User
+                    let finalUsername = userData.login;
+                    // Check for username collision
+                    const existingUsername = await db.query.users.findFirst({
+                        where: eq(users.username, finalUsername),
+                    });
+
+                    if (existingUsername) {
+                         finalUsername = `${finalUsername}${Math.floor(Math.random() * 10000)}`;
+                    }
+
                     const _insertResult = await db.insert(users).values({
                         email: email,
                         name: userData.name || userData.login,
-                        username: userData.login,
+                        username: finalUsername,
                         github_id: githubId,
                         avatar: avatarUrl,
                         role: "user", // Default role
@@ -136,6 +146,8 @@ export const githubAuth = {
                 email: user.email,
                 role: user.role,
                 avatar: user.avatar,
+                name: user.name,
+                username: user.username,
                 exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
             };
 

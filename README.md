@@ -98,3 +98,23 @@ To use the API, include the `X-API-KEY` header:
 ```bash
 curl -H "X-API-KEY: sk_your_key_here" http://localhost:8080/api/v1/resource
 ```
+
+### Validate API Key
+
+Check if an API key is valid and retrieve user info.
+
+```bash
+curl -H "X-API-KEY: sk_your_key_here" http://localhost:8080/api/v1/validate
+```
+
+**Response:**
+
+```json
+{
+   "valid": true,
+   "user_id": 1,
+   "username": "user123",
+   "role": "user",
+   "timestamp": "2025-01-01T12:00:00.000Z"
+}
+```

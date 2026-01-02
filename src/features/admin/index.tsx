@@ -87,10 +87,10 @@ app.get("/users", async (c) => {
                     </a>
                 }
             >
-                <Table headers={["ID", "Email", "Role", "Status", "Actions"]}>
+                <Table headers={["Username", "Email", "Role", "Status", "Actions"]}>
                     {allUsers.map((u) => (
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{u.id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.username}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.email}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">{u.role}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -195,10 +195,17 @@ app.post("/users/create", async (c) => {
         return c.text("Invalid input", 400); // Should ideally re-render form with error
     }
 
-    // Check existing
+    // Check existing email
     const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
     if (existing) {
         return c.text("User with this email already exists", 400);
+    }
+
+    // Check existing username and append random number if needed
+    let finalUsername = username;
+    const existingUsername = await db.query.users.findFirst({ where: eq(users.username, finalUsername) });
+    if (existingUsername) {
+        finalUsername = `${finalUsername}${Math.floor(Math.random() * 10000)}`;
     }
 
     const hashed = await hash(password, 10);
@@ -207,7 +214,7 @@ app.post("/users/create", async (c) => {
         email,
         password: hashed,
         name,
-        username,
+        username: finalUsername,
         role,
         status: "active",
     });

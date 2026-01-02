@@ -421,10 +421,7 @@ app.get("/profile", async (c) => {
                                 <div class="block text-sm font-medium text-gray-500">Full Name</div>
                                 <p>{user.name || "-"}</p>
                             </div>
-                            <div>
-                                <div class="block text-sm font-medium text-gray-500">User ID</div>
-                                <p class="font-mono">{user.id}</p>
-                            </div>
+                            {/* User ID removed */}
                             <div>
                                 <div class="block text-sm font-medium text-gray-500">Account Status</div>
                                 <Badge color={user.status === "active" ? "green" : "red"}>{user.status}</Badge>

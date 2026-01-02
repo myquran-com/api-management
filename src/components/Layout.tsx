@@ -63,21 +63,31 @@ export const Layout = ({
                         </div>
 
                         <nav class="mt-6 px-4 space-y-2">
-                            <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                            <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
                                 <IconDashboard class="w-5 h-5 text-primary-200" />
                                 Dashboard
                             </a>
+                            {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
+                            {(user as any)?.role === "admin" && (
+                                <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                    <IconShieldLock class="w-5 h-5 text-primary-200" />
+                                    Admin Panel
+                                </a>
+                            )}
                             <a href="/profile" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
                                 <IconUserCircle class="w-5 h-5 text-primary-200" />
                                 Profile
                             </a>
                             <div class="pt-4 mt-4 border-t border-white/10">
                                 <div class="px-4 text-xs font-semibold text-primary-200/70 uppercase tracking-wider mb-2">Settings</div>
-                                <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
-                                    <IconUsers class="w-5 h-5 text-primary-200" />
-                                    Users
-                                </a>
-                                <a href="/admin/keys" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
+                                {(user as any)?.role === "admin" && (
+                                    <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
+                                        <IconUsers class="w-5 h-5 text-primary-200" />
+                                        Users
+                                    </a>
+                                )}
+                                <a href="/keys" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-white/10 transition-colors">
                                     <IconKey class="w-5 h-5 text-primary-200" />
                                     API Keys
                                 </a>
@@ -94,7 +104,7 @@ export const Layout = ({
                                 />
                                 <div class="overflow-hidden">
                                      {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
-                                     <div class="text-sm font-medium truncate">{(user as any)?.name || "User"}</div>
+                                     <div class="text-sm font-medium truncate">{(user as any)?.name || (user as any)?.username || (user as any)?.email}</div>
                                      {/* biome-ignore lint/suspicious/noExplicitAny: user data is loosely typed */}
                                      <div class="text-xs text-primary-200/70 truncate">{(user as any)?.email}</div>
                                 </div>

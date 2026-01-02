@@ -6,7 +6,7 @@ export const users = mysqlTable(
     {
         id: int("id").primaryKey().autoincrement(),
         email: varchar("email", { length: 255 }).notNull().unique(),
-        username: varchar("username", { length: 50 }),
+        username: varchar("username", { length: 50 }).notNull().unique(),
         name: varchar("name", { length: 100 }),
         password: varchar("password", { length: 255 }), // Nullable for OAuth users
         github_id: varchar("github_id", { length: 255 }).unique(), // New field for GitHub OAuth
@@ -19,6 +19,7 @@ export const users = mysqlTable(
         return {
             emailIdx: index("email_idx").on(table.email),
             githubIdx: index("github_idx").on(table.github_id),
+            usernameIdx: uniqueIndex("username_idx").on(table.username),
         };
     },
 );

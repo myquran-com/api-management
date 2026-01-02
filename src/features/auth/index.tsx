@@ -107,6 +107,8 @@ app.post(
                 email: user.email,
                 role: user.role,
                 avatar: user.avatar,
+                name: user.name,
+                username: user.username,
                 exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
             };
             // biome-ignore lint/style/noNonNullAssertion: Enforced by env check

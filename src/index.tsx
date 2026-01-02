@@ -51,6 +51,7 @@ app.get("/api/v1/validate", async (c) => {
     return c.json({
         valid: true,
         user_id: result.user_id,
+        username: result.username,
         role: result.role,
         timestamp: new Date().toISOString(),
     });
