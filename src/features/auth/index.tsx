@@ -11,6 +11,8 @@ import { Layout } from "../../components/Layout";
 import { Card, Input, Button } from "../../components/UI";
 import { githubAuth } from "./github";
 
+import { rateLimiter } from "hono-rate-limiter";
+
 const app = new Hono();
 
 app.get("/login", (c) => {
@@ -55,7 +57,16 @@ app.get("/login", (c) => {
     );
 });
 
-app.post("/login", zValidator("form", loginSchema), async (c) => {
+app.post("/login", 
+    rateLimiter({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        limit: 5, // Limit each IP to 5 requests per `window` (here, per 15 minutes).
+        standardHeaders: "draft-6", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+        keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "unknown", // Method to generate custom identifiers for clients.
+    }),
+    zValidator("form", loginSchema), 
+    async (c) => {
+
     const { email, password } = c.req.valid("form");
 
     // DB Lookup

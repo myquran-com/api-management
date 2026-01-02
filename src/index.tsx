@@ -1,3 +1,4 @@
+console.log("Starting server...");
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { createMiddleware } from "hono/factory";
@@ -11,9 +12,20 @@ import { db } from "./db";
 import { users } from "./db/schema";
 import { eq } from "drizzle-orm";
 
+import { rateLimiter } from "hono-rate-limiter";
+
 const app = new Hono<{ Variables: { user_id: number; jwtPayload: any } }>();
 
 app.use("*", loggerMiddleware);
+app.use(
+    "*",
+    rateLimiter({
+        windowMs: 60 * 1000, // 1 minute
+        limit: 100, // Limit each IP to 100 requests per `window` (here, per 1 minute).
+        standardHeaders: "draft-6", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+        keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "unknown", // Method to generate custom identifiers for clients.
+    })
+);
 
 // Serve static files (Tailwind CSS)
 app.use("/static/*", serveStatic({ root: "./src" }));

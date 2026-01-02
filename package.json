@@ -31,6 +31,7 @@
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.3",
+    "hono-rate-limiter": "^0.5.3",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.16.0",
     "zod": "^4.3.4"
