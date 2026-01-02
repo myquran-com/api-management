@@ -50,33 +50,33 @@ app.get("/api/v1/validate", async (c) => {
 
     return c.json({
         valid: true,
-        user_id: result.user_id,
+        // user_id removed as requested
         username: result.username,
         role: result.role,
         timestamp: new Date().toISOString(),
     });
 });
 
-app.get("/api/v1/users/:id", async (c) => {
+app.get("/api/v1/users/:username", async (c) => {
     const apiKey = c.req.header("X-API-KEY");
     if (!apiKey) return c.json({ error: "Missing API Key" }, 401);
 
     const auth = await validateApiKeyString(apiKey);
     if (!auth.valid) return c.json({ error: auth.error }, 401);
 
-    const targetId = parseInt(c.req.param("id"), 10);
+    const targetUsername = c.req.param("username");
 
     const isAdmin = auth.role === "admin";
-    const isSelf = auth.user_id === targetId;
+    // Check if the authenticated user's username matches the requested username
+    const isSelf = auth.username === targetUsername;
 
     if (!isAdmin && !isSelf) {
-        return c.json({ error: "Unauthorized: Access denied to this user ID" }, 403);
+        return c.json({ error: "Unauthorized: Access denied to this user" }, 403);
     }
 
     const targetUser = await db.query.users.findFirst({
-        where: eq(users.id, targetId),
+        where: eq(users.username, targetUsername),
         columns: {
-            id: true,
             email: true,
             name: true,
             username: true,

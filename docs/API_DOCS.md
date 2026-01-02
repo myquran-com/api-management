@@ -25,8 +25,8 @@ curl http://localhost:8080/health
 
 ```json
 {
-    "status": "ok",
-    "uptime": 123.45
+  "status": "ok",
+  "uptime": 123.45
 }
 ```
 
@@ -54,8 +54,8 @@ curl http://localhost:8080/api/v1/resource \
 
 ```json
 {
-    "message": "Access Granted",
-    "user_id": 5
+  "message": "Access Granted",
+  "user_id": 5
 }
 ```
 
@@ -92,10 +92,9 @@ curl http://localhost:8080/api/v1/validate \
 
 ```json
 {
-    "valid": true,
-    "user_id": 5,
-    "role": "user",
-    "timestamp": "2025-01-01T10:00:00.000Z"
+  "valid": true,
+  "role": "user",
+  "timestamp": "2025-01-01T10:00:00.000Z"
 }
 ```
 
@@ -103,8 +102,8 @@ curl http://localhost:8080/api/v1/validate \
 
 ```json
 {
-    "valid": false,
-    "error": "Invalid API Key"
+  "valid": false,
+  "error": "Invalid API Key"
 }
 ```
 
@@ -114,30 +113,30 @@ curl http://localhost:8080/api/v1/validate \
 
 Endpoint untuk melihat detail identitas pemilik API Key.
 
-### `GET /api/v1/users/:id`
+### `GET /api/v1/users/:username`
 
 Memungkinkan pemilik Key melihat data dirinya sendiri, ATAU Admin melihat data
 user lain.
 
 - **Auth**: API Key (`X-API-KEY`)
 - **Permission**:
-  - Jika `User ID` di URL == `Owner ID Key`: **Boleh**.
+  - Jika `Username` di URL == `Owner Username Key`: **Boleh**.
   - Jika `Owner Key` adalah `admin`: **Boleh** (bisa cek siapa saja).
   - Lainnya: **Forbidden (403)**.
 
 **Contoh cURL (Cek Diri Sendiri):**
 
 ```bash
-# User ID 5 mengecek dirinya sendiri (ID 5)
-curl http://localhost:8080/api/v1/users/5 \
+# User 'budi123' mengecek dirinya sendiri
+curl http://localhost:8080/api/v1/users/budi123 \
   -H "X-API-KEY: sk_user_key"
 ```
 
 **Contoh cURL (Admin Cek User Lain):**
 
 ```bash
-# Admin (ID 1) mengecek User ID 99
-curl http://localhost:8080/api/v1/users/99 \
+# Admin mengecek User 'bunga99'
+curl http://localhost:8080/api/v1/users/bunga99 \
   -H "X-API-KEY: sk_admin_key"
 ```
 
@@ -145,20 +144,19 @@ curl http://localhost:8080/api/v1/users/99 \
 
 ```json
 {
-    "success": true,
-    "data": {
-        "id": 5,
-        "email": "user@example.com",
-        "name": "Budi Santoso",
-        "username": "budi123",
-        "status": "active",
-        "role": "user"
-    }
+  "success": true,
+  "data": {
+    "email": "user@example.com",
+    "name": "Budi Santoso",
+    "username": "budi123",
+    "status": "active",
+    "role": "user"
+  }
 }
 ```
 
 **Error (403 Forbidden):**
 
 ```json
-{ "error": "Unauthorized: Access denied to this user ID" }
+{ "error": "Unauthorized: Access denied to this user" }
 ```
