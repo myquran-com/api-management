@@ -43,35 +43,27 @@ export async function hashKey(key: string) {
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export const apiKeyMiddleware = createMiddleware(async (c, next) => {
-  const apiKey = c.req.header("X-API-KEY");
-
-  if (!apiKey) {
-    return c.json({ error: "Missing API Key" }, 401);
-  }
-
+// Shared validation logic
+export async function validateApiKeyString(apiKey: string) {
   const hashed = await hashKey(apiKey);
 
   // Check key existence and status
   const keyRecord = await db.query.apiKeys.findFirst({
     where: eq(apiKeys.key_hash, hashed),
-    with: {
-        // We need check user status too? Drizzle relations or manual query
-    }
   });
 
   if (!keyRecord) {
-    return c.json({ error: "Invalid API Key" }, 401);
+    return { valid: false, error: "Invalid API Key" };
   }
 
   // Check if expired
   if (keyRecord.expires_at && new Date() > keyRecord.expires_at) {
-      return c.json({ error: "API Key Expired" }, 401);
+      return { valid: false, error: "API Key Expired" };
   }
 
   // Check if key is active
   if (keyRecord.status !== 'active') {
-       return c.json({ error: "API Key Revoked" }, 401);
+       return { valid: false, error: "API Key Revoked" };
   }
 
   // CRITICAL: Check User Status
@@ -81,23 +73,37 @@ export const apiKeyMiddleware = createMiddleware(async (c, next) => {
   });
 
   if (!user || user.status !== 'active') {
-       return c.json({ error: "User Inactive - API Access Denied" }, 403);
+       return { valid: false, error: "User Inactive - API Access Denied" };
   }
 
-  // Update last used and hit count
+  // Update last used and hit count (Side effect)
   await db.update(apiKeys)
     .set({ 
         last_used_at: new Date(),
         total_hits: sql`${apiKeys.total_hits} + 1`
     })
     .where(eq(apiKeys.id, keyRecord.id));
-    
-  // Log access (simple access log logic inline or via another middleware)
-  // For 'audit log' requirement (admin actions), we handle that in mutation endpoints.
-  // For 'access log', we can just log here.
-  console.log(`API Access: KeyID=${keyRecord.id} UserID=${keyRecord.user_id}`);
 
-  c.set("user_id", keyRecord.user_id);
+  return { valid: true, user_id: keyRecord.user_id, key_record: keyRecord };
+}
+
+export const apiKeyMiddleware = createMiddleware(async (c, next) => {
+  const apiKey = c.req.header("X-API-KEY");
+
+  if (!apiKey) {
+    return c.json({ error: "Missing API Key" }, 401);
+  }
+
+  const result = await validateApiKeyString(apiKey);
+
+  if (!result.valid) {
+      return c.json({ error: result.error }, 401);
+  }
+
+  // Log access
+  console.log(`API Access: KeyID=${result.key_record?.id} UserID=${result.user_id}`);
+
+  c.set("user_id", result.user_id);
   await next();
 });
 

@@ -126,3 +126,17 @@ def protected():
         "data_for_user": auth_data['user_id']
     })
 ```
+
+### cURL (Terminal)
+
+Untuk sekadar memvalidasi Key tanpa membuat kode program, gunakan perintah ini:
+
+```bash
+curl -X GET http://localhost:8080/api/v1/validate -H "X-API-KEY: sk_your_key_here"
+```
+
+Response jika valid:
+
+```json
+{ "valid": true, "user_id": 1, "timestamp": "2025-01-02T06:22:00.000Z" }
+```
