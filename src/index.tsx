@@ -24,7 +24,7 @@ app.use(
         limit: 100, // Limit each IP to 100 requests per `window` (here, per 1 minute).
         standardHeaders: "draft-6", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
         keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "unknown", // Method to generate custom identifiers for clients.
-    })
+    }),
 );
 
 // Serve static files (Tailwind CSS)
@@ -38,7 +38,7 @@ app.get("/health", (c) => c.json({ status: "ok", uptime: process.uptime() }));
 // Specific Route for Validation (Must BEFORE generic middleware)
 app.get("/api/v1/validate", async (c) => {
     const apiKey = c.req.header("X-API-KEY");
-    
+
     if (!apiKey) {
         return c.json({ valid: false, error: "Missing API Key" });
     }
@@ -49,11 +49,11 @@ app.get("/api/v1/validate", async (c) => {
         return c.json({ valid: false, error: result.error });
     }
 
-    return c.json({ 
-        valid: true, 
+    return c.json({
+        valid: true,
         user_id: result.user_id,
         role: result.role,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
     });
 });
 
@@ -65,9 +65,9 @@ app.get("/api/v1/users/:id", async (c) => {
     if (!auth.valid) return c.json({ error: auth.error }, 401);
 
     const targetId = parseInt(c.req.param("id"));
-    
+
     // @ts-ignore
-    const isAdmin = auth.role === 'admin';
+    const isAdmin = auth.role === "admin";
     const isSelf = auth.user_id === targetId;
 
     if (!isAdmin && !isSelf) {
@@ -82,22 +82,21 @@ app.get("/api/v1/users/:id", async (c) => {
             name: true,
             username: true,
             status: true,
-            role: true
-        }
+            role: true,
+        },
     });
 
     if (!targetUser) return c.json({ error: "User not found" }, 404);
 
     return c.json({
         success: true,
-        data: targetUser
+        data: targetUser,
     });
-}); 
-// Returning placeholder to ensure file is safe while I add imports. 
+});
+// Returning placeholder to ensure file is safe while I add imports.
 // Actually, I should just Add Imports FIRST.
 // But I am already committed to this tool call.
 // I will implement the logic assuming imports exist, and then immediately add imports.
-
 
 // API Service Route (Mocking the actual service that uses the keys)
 // This will still use standard middleware which returns 401 on error
@@ -125,8 +124,8 @@ app.get("/", (c) => {
     return c.redirect("/login");
 });
 
-export default { 
-    port: parseInt(process.env.PORT || "8080"), 
+export default {
+    port: parseInt(process.env.PORT || "8080"),
     hostname: process.env.HOST || "localhost",
-    fetch: app.fetch 
+    fetch: app.fetch,
 };

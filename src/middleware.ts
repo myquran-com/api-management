@@ -13,25 +13,26 @@ export const loggerMiddleware = createMiddleware(async (c, next) => {
 });
 
 export const authMiddleware = createMiddleware(async (c, next) => {
-  const token = c.req.header("Authorization")?.replace("Bearer ", "") || getCookie(c, "token"); // Support cookie for UI
-  
-  if (!token) { // If no token, check if it's a browser request, maybe redirect
-      if (c.req.header('accept')?.includes('text/html')) {
-           return c.redirect('/login');
-      }
-      return c.json({ error: "Unauthorized" }, 401);
-  }
+    const token = c.req.header("Authorization")?.replace("Bearer ", "") || getCookie(c, "token"); // Support cookie for UI
 
-  try {
-    const payload = await verify(token, process.env.JWT_SECRET!);
-    c.set("jwtPayload", payload);
-    await next();
-  } catch (e) {
-      if (c.req.header('accept')?.includes('text/html')) {
-           return c.redirect('/login');
-      }
-    return c.json({ error: "Invalid token" }, 401);
-  }
+    if (!token) {
+        // If no token, check if it's a browser request, maybe redirect
+        if (c.req.header("accept")?.includes("text/html")) {
+            return c.redirect("/login");
+        }
+        return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    try {
+        const payload = await verify(token, process.env.JWT_SECRET!);
+        c.set("jwtPayload", payload);
+        await next();
+    } catch (e) {
+        if (c.req.header("accept")?.includes("text/html")) {
+            return c.redirect("/login");
+        }
+        return c.json({ error: "Invalid token" }, 401);
+    }
 });
 
 // Helper to hash key (simple sha256)
@@ -45,66 +46,67 @@ export async function hashKey(key: string) {
 
 // Shared validation logic
 export async function validateApiKeyString(apiKey: string) {
-  const hashed = await hashKey(apiKey);
+    const hashed = await hashKey(apiKey);
 
-  // Check key existence and status
-  const keyRecord = await db.query.apiKeys.findFirst({
-    where: eq(apiKeys.key_hash, hashed),
-  });
+    // Check key existence and status
+    const keyRecord = await db.query.apiKeys.findFirst({
+        where: eq(apiKeys.key_hash, hashed),
+    });
 
-  if (!keyRecord) {
-    return { valid: false, error: "Invalid API Key" };
-  }
+    if (!keyRecord) {
+        return { valid: false, error: "Invalid API Key" };
+    }
 
-  // Check if expired
-  if (keyRecord.expires_at && new Date() > keyRecord.expires_at) {
-      return { valid: false, error: "API Key Expired" };
-  }
+    // Check if expired
+    if (keyRecord.expires_at && new Date() > keyRecord.expires_at) {
+        return { valid: false, error: "API Key Expired" };
+    }
 
-  // Check if key is active
-  if (keyRecord.status !== 'active') {
-       return { valid: false, error: "API Key Revoked" };
-  }
+    // Check if key is active
+    if (keyRecord.status !== "active") {
+        return { valid: false, error: "API Key Revoked" };
+    }
 
-  // CRITICAL: Check User Status
-  const user = await db.query.users.findFirst({
-      where: eq(users.id, keyRecord.user_id),
-      columns: { id: true, status: true, role: true }
-  });
+    // CRITICAL: Check User Status
+    const user = await db.query.users.findFirst({
+        where: eq(users.id, keyRecord.user_id),
+        columns: { id: true, status: true, role: true },
+    });
 
-  if (!user || user.status !== 'active') {
-       return { valid: false, error: "User Inactive - API Access Denied" };
-  }
+    if (!user || user.status !== "active") {
+        return { valid: false, error: "User Inactive - API Access Denied" };
+    }
 
-  // Update last used and hit count (Side effect)
-  await db.update(apiKeys)
-    .set({ 
-        last_used_at: new Date(),
-        total_hits: sql`${apiKeys.total_hits} + 1`
-    })
-    .where(eq(apiKeys.id, keyRecord.id));
+    // Update last used and hit count (Side effect)
+    await db
+        .update(apiKeys)
+        .set({
+            last_used_at: new Date(),
+            total_hits: sql`${apiKeys.total_hits} + 1`,
+        })
+        .where(eq(apiKeys.id, keyRecord.id));
 
-  return { valid: true, user_id: keyRecord.user_id, role: user.role, key_record: keyRecord };
+    return { valid: true, user_id: keyRecord.user_id, role: user.role, key_record: keyRecord };
 }
 
 export const apiKeyMiddleware = createMiddleware(async (c, next) => {
-  const apiKey = c.req.header("X-API-KEY");
+    const apiKey = c.req.header("X-API-KEY");
 
-  if (!apiKey) {
-    return c.json({ error: "Missing API Key" }, 401);
-  }
+    if (!apiKey) {
+        return c.json({ error: "Missing API Key" }, 401);
+    }
 
-  const result = await validateApiKeyString(apiKey);
+    const result = await validateApiKeyString(apiKey);
 
-  if (!result.valid) {
-      return c.json({ error: result.error }, 401);
-  }
+    if (!result.valid) {
+        return c.json({ error: result.error }, 401);
+    }
 
-  // Log access
-  console.log(`API Access: KeyID=${result.key_record?.id} UserID=${result.user_id}`);
+    // Log access
+    console.log(`API Access: KeyID=${result.key_record?.id} UserID=${result.user_id}`);
 
-  c.set("user_id", result.user_id);
-  await next();
+    c.set("user_id", result.user_id);
+    await next();
 });
 
 export const auditLog = async (action: string, actorId: number, targetId: number | null, details: string) => {
@@ -113,6 +115,6 @@ export const auditLog = async (action: string, actorId: number, targetId: number
         actor_id: actorId,
         target_id: targetId,
         details,
-        ip_address: "127.0.0.1" // Simplified
+        ip_address: "127.0.0.1", // Simplified
     });
-}
+};
