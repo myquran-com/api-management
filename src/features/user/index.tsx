@@ -137,7 +137,7 @@ app.get("/keys", async (c) => {
     return c.html(
         <Layout title="My API Keys" user={user}>
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold">API Keys</h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">API Keys</h1>
                 <a href="/keys/create" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                     Generate New Key
                 </a>
@@ -399,8 +399,8 @@ app.get("/profile", async (c) => {
                                 class="w-20 h-20 rounded-full border-2 border-gray-200 dark:border-slate-700"
                             />
                             <div>
-                                <h3 class="text-2xl font-bold">{user.name || user.email}</h3>
-                                <p class="text-gray-500">{user.email}</p>
+                                <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{user.name || user.email}</h3>
+                                <p class="text-gray-500 dark:text-gray-400">{user.email}</p>
                                 <Badge color={user.role === "admin" ? "blue" : "gray"}>{user.role}</Badge>
                             </div>
                             <div class="ml-auto flex flex-col items-end gap-2">
